@@ -15,9 +15,8 @@ Our project explores **in-context learning** (ICL) — the ability of large lang
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/<your-org-or-username>/in-context-learning-capstone.git
-cd in-context-learning-capstone
-pip install -r requirements.txt
+git clone https://github.com/<your-org-or-username>/DSC180a-ICL-A11.git
+cd DSC180a-ICL-A11
 ```
 
 You may also need access to a Hugging Face token or OpenAI API key depending on the chosen models.
