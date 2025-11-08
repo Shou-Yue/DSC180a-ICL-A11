@@ -4,8 +4,8 @@ This repository attempts to reproduce and extend the results from _What Can Tran
 
 The repository is structured as follows:
 
-`experiments-from-scratch`, this folder contains all of the code that I've written 
----| `overparameterized-gradient-descent`, this folder contains the code to show that gradient descent is able to achieve zero training loss on an overparameterized linear regression dataset
----| `gradient-descent-lsa`, this folder contains the code to generate synthetic training data and train a transformer using curriculum learning
-`in-context-learning`, this is the codebase provided by the authors of _What Can Transformers Learn In Context? A Case Study of Simple Functions?_
-`transformers-learn-in-context-by-gradient-descent`, this is the codebase provided by the authors of _Transformers Learn In-Context by Gradient Descent_
+`experiments-from-scratch`, this folder contains all of the code that I've written   
+---| `overparameterized-gradient-descent`, this folder contains the code to show that gradient descent is able to achieve zero training loss on an overparameterized linear regression dataset  
+---| `gradient-descent-lsa`, this folder contains the code to generate synthetic training data and train a transformer using curriculum learning  
+`in-context-learning`, this is the codebase provided by the authors of _What Can Transformers Learn In Context? A Case Study of Simple Functions?_  
+`transformers-learn-in-context-by-gradient-descent`, this is the codebase provided by the authors of _Transformers Learn In-Context by Gradient Descent_. 
