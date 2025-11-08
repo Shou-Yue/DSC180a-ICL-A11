@@ -22,7 +22,8 @@ The repository is structured as follows:
 ## Running Experiments
 
 ```
-git clone https://github.com/Shou-Yue/DSC180a-ICL-A11.cd DSC180a-ICL-A11
+git clone https://github.com/Shou-Yue/DSC180a-ICL-A11.
+cd DSC180a-ICL-A11
 git checkout anish
 cd experiments-from-scratch
 pip3 install -r requirements.txt
