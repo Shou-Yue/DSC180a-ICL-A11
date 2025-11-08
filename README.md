@@ -5,7 +5,7 @@ Each prompt contains \( N = 2d + 1 \) labeled examples and a test query. The mod
 
 ---
 
-## 📁 Folder Structure
+## Folder Structure
 
 .
 ├── Classification_Model/ # Linear classification notebooks & scripts
