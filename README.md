@@ -163,6 +163,8 @@ ETA = 1.0
 4. Export plots and metrics
 
 ## References
-- 
+- Transformers Learn In-Context by Gradient Descent (Oswald, 2023)
+- What Can Transformers Learn In-Context? A Case Study of Simple Function Classes (Garg, Neuro IPS)
+- Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context" (Frei & Vardi, 2024)
 ## Maintainer
 Shoutai Yue
