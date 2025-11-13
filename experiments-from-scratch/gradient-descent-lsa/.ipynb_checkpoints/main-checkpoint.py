@@ -18,34 +18,24 @@ def get_device():
     return device
 
 def generate_batch(batch_size, n, curr_d, max_d, device, s = None):
-    # 1. Sample all x's in the current active subspace, zero-pad to max_d.
-    # xs[:, :, :curr_d] ~ N(0, 1), xs[:, :, curr_d:] = 0
     xs = torch.zeros(batch_size, n, max_d, device = device)
     xs[:, :, :curr_d] = torch.randn(batch_size, n, curr_d, device = device)
 
-    # 2. Sample ground-truth weights w in the same subspace, zero-pad to max_d.
     ws = torch.zeros(batch_size, max_d, device = device)
 
     if s is None or s >= curr_d:
-        # Dense case: all first curr_d coords are active
         ws[:, :curr_d] = torch.randn(batch_size, curr_d, device = device)
     else:
-        # Sparse case: exactly s nonzero coords within the first curr_d dims
-        # for each task in the batch.
         for b in range(batch_size):
-            # Choose s random active coordinates inside [0, curr_d)
             idx = torch.randperm(curr_d, device = device)[:s]
             ws[b, idx] = torch.randn(s, device = device)
 
-    # 3. Evaluate y = x @ w for each task and point.
-    # xs: (B, n, max_d), ws: (B, max_d) -> ys: (B, n)
     ys = torch.einsum("bnd,bd->bn", xs, ws)
 
     return xs, ys
 
 class Curriculum:
-    def __init__(self, dims_start: int, dims_end: int, dims_inc: int, 
-                 points_start: int, points_end: int, points_inc: int, interval: int):
+    def __init__(self, dims_start: int, dims_end: int, dims_inc: int, points_start: int, points_end: int, points_inc: int, interval: int):
         self.n_dims = dims_start
         self.dims_end = dims_end
         self.dims_inc = dims_inc
@@ -69,13 +59,13 @@ class TransformerModel(nn.Module):
         super(TransformerModel, self).__init__()
         configuration = GPT2Config(
             n_positions=2 * n_positions,
-            n_embd=n_embd,
-            n_layer=n_layer,
-            n_head=n_head,
-            resid_pdrop=0.0,
-            embd_pdrop=0.0,
-            attn_pdrop=0.0,
-            use_cache=False,
+            n_embd = n_embd,
+            n_layer = n_layer,
+            n_head = n_head,
+            resid_pdrop = 0.0,
+            embd_pdrop = 0.0,
+            attn_pdrop = 0.0,
+            use_cache = False,
         )
         self.name = f"gpt2_embd={n_embd}_layer={n_layer}_head={n_head}"
 
@@ -94,9 +84,9 @@ class TransformerModel(nn.Module):
                 ys_b.view(bsize, points, 1),
                 torch.zeros(bsize, points, dim - 1, device=ys_b.device),
             ),
-            axis=2,
+            axis = 2,
         )
-        zs = torch.stack((xs_b, ys_b_wide), dim=2)
+        zs = torch.stack((xs_b, ys_b_wide), dim = 2)
         zs = zs.view(bsize, 2 * points, dim)
         return zs
 
@@ -109,12 +99,11 @@ class TransformerModel(nn.Module):
                 raise ValueError("inds contain indices where xs and ys are not defined")
         zs = self._combine(xs, ys)
         embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds=embeds).last_hidden_state
+        output = self._backbone(inputs_embeds = embeds).last_hidden_state
         prediction = self._read_out(output)
         return prediction[:, ::2, 0][:, inds]  # predict only on xs
 
 device = get_device()
-print(f"Using device: {device}")
 
 # hyperparams
 max_d = 20          # ambient dimension
@@ -138,9 +127,9 @@ curriculum = Curriculum(
 model = TransformerModel(
     n_dims = max_d,
     n_positions = max_points,
-    n_embd = 128,
-    n_layer = 4,
-    n_head = 4,
+    n_embd = 256,
+    n_layer = 12,
+    n_head = 8,
 ).to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr = lr)
@@ -181,11 +170,12 @@ for step in pbar:
 
     curriculum.update()
 
-    pbar.set_postfix({
-        "loss": f"{loss.item():.4f}",
-        "n": n,
-        "d": curr_d
-    })
+    if step % 100 == 0:
+        pbar.set_postfix({
+            "loss": f"{loss.item():.4f}",
+            "n": n,
+            "d": curr_d
+        })
 
 save_path = "standard_linear_regression.pt"
 torch.save(
