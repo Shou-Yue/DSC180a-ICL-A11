@@ -1,64 +1,88 @@
-from tqdm import tqdm
+import os
+import math
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from transformers import GPT2Model, GPT2Config
+from tqdm import tqdm
+from transformers import GPT2Config, GPT2Model
 
-def get_device():
-    if torch.backends.mps.is_available():
-        device = torch.device("mps")
-        print("Device: Apple Silicon")
-    elif torch.cuda.is_available():
-        device = torch.device("cuda")
-        print("Device: GPU")
-    else:
-        device = torch.device("cpu")
-        print("Device: CPU")
 
-    return device
+#############################################
+# Hyperparameters and config
+#############################################
 
-def generate_batch(batch_size, n, curr_d, max_d, device, s = None):
-    xs = torch.zeros(batch_size, n, max_d, device = device)
-    xs[:, :, :curr_d] = torch.randn(batch_size, n, curr_d, device = device)
+OUT_DIR = "models/linear_regression"
 
-    ws = torch.zeros(batch_size, max_d, device = device)
+# model settings
+N_DIMS = 20
+N_POSITIONS = 101  # this just has to be > the max points in the curriculum
+N_EMBD = 256
+N_ATT_LAYERS = 12
+N_ATT_HEADS = 8
 
-    if s is None or s >= curr_d:
-        ws[:, :curr_d] = torch.randn(batch_size, curr_d, device = device)
-    else:
-        for b in range(batch_size):
-            idx = torch.randperm(curr_d, device = device)[:s]
-            ws[b, idx] = torch.randn(s, device = device)
+# training settings
+BATCH_SIZE = 64
+LEARNING_RATE = 1e-4
+TRAIN_STEPS = 500_001
+SAVE_EVERY_STEPS = 1_000
+KEEP_EVERY_STEPS = 100_000
 
-    ys = torch.einsum("bnd,bd->bn", xs, ws)
+# curriculum settings
+CURR_DIMS_START = 5
+CURR_DIMS_END = 20
+CURR_DIMS_INC = 1
+CURR_POINTS_START = 11
+CURR_POINTS_END = 41
+CURR_POINTS_INC = 2
+CURR_INTERVAL = 2_000  # how often to update dims/points
 
-    return xs, ys
+
+#############################################
+# Utilities
+#############################################
+
+def mean_squared_error(pred, target):
+    return ((pred - target) ** 2).mean()
+
 
 class Curriculum:
-    def __init__(self, dims_start: int, dims_end: int, dims_inc: int, points_start: int, points_end: int, points_inc: int, interval: int):
-        self.n_dims = dims_start
+    """Simple curriculum on (effective dimension, number of points)."""
+
+    def __init__(
+        self,
+        dims_start,
+        dims_end,
+        dims_inc,
+        points_start,
+        points_end,
+        points_inc,
+        interval,
+    ):
+        self.dims_trunc = dims_start
+        self.points = points_start
+
+        self.dims_start = dims_start
         self.dims_end = dims_end
         self.dims_inc = dims_inc
 
-        self.n_points = points_start
+        self.points_start = points_start
         self.points_end = points_end
         self.points_inc = points_inc
 
         self.interval = interval
-        self.step_count = 0
+        self.step = 0
 
     def update(self):
-        self.step_count += 1
+        self.step += 1
+        if self.step % self.interval == 0:
+            self.dims_trunc = min(self.dims_trunc + self.dims_inc, self.dims_end)
+            self.points = min(self.points + self.points_inc, self.points_end)
 
-        if self.step_count % self.interval == 0:
-            self.n_dims = min(self.n_dims + self.dims_inc, self.dims_end)
-            self.n_points = min(self.n_points + self.points_inc, self.points_end)
 
 class TransformerModel(nn.Module):
-    def __init__(self, n_dims, n_positions, n_embd=128, n_layer=12, n_head=4):
-        super(TransformerModel, self).__init__()
-        configuration = GPT2Config(
-            n_positions=2 * n_positions,
+    def __init__(self, n_dims, n_positions, n_embd = 256, n_layer = 12, n_head = 8):
+        super().__init__()
+        config = GPT2Config(
+            n_positions = 2 * n_positions,
             n_embd = n_embd,
             n_layer = n_layer,
             n_head = n_head,
@@ -71,121 +95,194 @@ class TransformerModel(nn.Module):
 
         self.n_positions = n_positions
         self.n_dims = n_dims
-        self._read_in = nn.Linear(n_dims, n_embd)
-        self._backbone = GPT2Model(configuration)
-        self._read_out = nn.Linear(n_embd, 1)
+
+        self.read_in = nn.Linear(n_dims, n_embd)
+        self.backbone = GPT2Model(config)
+        self.read_out = nn.Linear(n_embd, 1)
 
     @staticmethod
     def _combine(xs_b, ys_b):
-        """Interleaves the x's and the y's into a single sequence."""
+        """
+        Interleave x's and y's into a single sequence.
+
+        xs_b: [B, T, D]
+        ys_b: [B, T]
+
+        Returns: [B, 2T, D] where positions are x_1, y_1, x_2, y_2, ...
+        """
         bsize, points, dim = xs_b.shape
+
         ys_b_wide = torch.cat(
             (
                 ys_b.view(bsize, points, 1),
-                torch.zeros(bsize, points, dim - 1, device=ys_b.device),
+                torch.zeros(bsize, points, dim - 1, device = ys_b.device),
             ),
-            axis = 2,
+            dim = 2,
         )
+
+        # zs[:, 0] = x_1, zs[:, 1] = y_1, zs[:, 2] = x_2, zs[:, 3] = y_2, ...
         zs = torch.stack((xs_b, ys_b_wide), dim = 2)
         zs = zs.view(bsize, 2 * points, dim)
         return zs
 
-    def forward(self, xs, ys, inds=None):
-        if inds is None:
-            inds = torch.arange(ys.shape[1])
-        else:
-            inds = torch.tensor(inds)
-            if max(inds) >= ys.shape[1] or min(inds) < 0:
-                raise ValueError("inds contain indices where xs and ys are not defined")
+    def forward(self, xs, ys):
+        """
+        xs: [B, T, D]
+        ys: [B, T]
+
+        Returns predictions for all y positions: [B, T]
+        """
         zs = self._combine(xs, ys)
-        embeds = self._read_in(zs)
-        output = self._backbone(inputs_embeds = embeds).last_hidden_state
-        prediction = self._read_out(output)
-        return prediction[:, ::2, 0][:, inds]  # predict only on xs
+        embeds = self.read_in(zs)
+        output = self.backbone(inputs_embeds = embeds).last_hidden_state
+        prediction = self.read_out(output)          # [B, 2T, 1]
+        prediction = prediction[:, ::2, 0]          # keep only x positions -> [B, T]
+        return prediction
 
-device = get_device()
 
-# hyperparams
-max_d = 20          # ambient dimension
-max_points = 41     # max number of points in curriculum
-batch_size = 64
-num_steps = 500_000
-lr = 1e-4
-sparsity_s = None   # or e.g. 5 for sparse w
+#############################################
+# Data generation (Gaussian + linear regression)
+#############################################
 
-# curriculum: example similar to Garg-style
-curriculum = Curriculum(
-    dims_start = 5,
-    dims_end = max_d,
-    dims_inc = 1,
-    points_start = 11,
-    points_end = max_points,
-    points_inc = 2,
-    interval = 2000,
-)
+def sample_gaussian_xs(batch_size, n_points, n_dims, n_dims_trunc, device):
+    """
+    Sample Gaussian inputs and optionally truncate to a lower-dimensional
+    subspace by zeroing out the last coordinates.
+    """
+    xs = torch.randn(batch_size, n_points, n_dims, device = device)
+    if n_dims_trunc is not None and n_dims_trunc < n_dims:
+        xs[:, :, n_dims_trunc:] = 0.0
+    return xs
 
-model = TransformerModel(
-    n_dims = max_d,
-    n_positions = max_points,
-    n_embd = 256,
-    n_layer = 12,
-    n_head = 8,
-).to(device)
 
-optimizer = torch.optim.Adam(model.parameters(), lr = lr)
-loss_fn = F.mse_loss
+def sample_linear_regression_weights(batch_size, n_dims, device):
+    """
+    Sample one weight vector per batch element, w ~ N(0, I).
+    """
+    return torch.randn(batch_size, n_dims, 1, device = device)
 
-model.train()
 
-pbar = tqdm(range(num_steps), desc="training", ncols=100)
+def evaluate_linear_regression(xs, w, scale = 1.0):
+    """
+    xs: [B, T, D]
+    w: [B, D, 1]
 
-for step in pbar:
-    n = curriculum.n_points
-    curr_d = curriculum.n_dims
+    Returns ys: [B, T]
+    """
+    ys = scale * (xs @ w)   # [B, T, 1]
+    return ys[:, :, 0]
 
-    xs, ys = generate_batch(
-        batch_size = batch_size,
-        n = n,
-        curr_d = curr_d,
-        max_d = max_d,
-        device = device,
-        s = sparsity_s,
+
+#############################################
+# Training
+#############################################
+
+def train(model):
+    device = next(model.parameters()).device
+
+    os.makedirs(OUT_DIR, exist_ok = True)
+    state_path = os.path.join(OUT_DIR, "state.pt")
+
+    optimizer = torch.optim.Adam(model.parameters(), lr = LEARNING_RATE)
+
+    curriculum = Curriculum(
+        dims_start = CURR_DIMS_START,
+        dims_end = CURR_DIMS_END,
+        dims_inc = CURR_DIMS_INC,
+        points_start = CURR_POINTS_START,
+        points_end = CURR_POINTS_END,
+        points_inc = CURR_POINTS_INC,
+        interval = CURR_INTERVAL,
     )
 
-    # zero out y at the query position for input (optional but explicit)
-    ys_in = ys.clone()
-    ys_in[:, -1] = 0.0
+    # Resume if state exists
+    starting_step = 0
+    if os.path.exists(state_path):
+        state = torch.load(state_path, weights_only = True)
+        model.load_state_dict(state["model_state_dict"])
+        optimizer.load_state_dict(state["optimizer_state_dict"])
+        starting_step = state["train_step"]
 
-    # last index is the query point
-    inds = [n - 1]
+        # Fast forward curriculum
+        for _ in range(starting_step + 1):
+            curriculum.update()
 
-    # forward
-    optimizer.zero_grad()
-    y_pred = model(xs, ys_in, inds = inds).squeeze(-1)  # (B,)
-    y_target = ys[:, -1]                                # (B,)
+    ema_loss = None
+    alpha = 0.01
 
-    loss = loss_fn(y_pred, y_target)
-    loss.backward()
-    optimizer.step()
+    pbar = tqdm(range(starting_step, TRAIN_STEPS))
+    for step in pbar:
+        n_points = curriculum.points
+        n_dims_trunc = curriculum.dims_trunc
 
-    curriculum.update()
+        # Sample data
+        xs = sample_gaussian_xs(
+            batch_size = BATCH_SIZE,
+            n_points = n_points,
+            n_dims = model.n_dims,
+            n_dims_trunc = n_dims_trunc,
+            device = device,
+        )
+        w = sample_linear_regression_weights(
+            batch_size = BATCH_SIZE,
+            n_dims = model.n_dims,
+            device = device,
+        )
+        ys = evaluate_linear_regression(xs, w)  # [B, T]
 
-    if step % 100 == 0:
-        pbar.set_postfix({
-            "loss": f"{loss.item():.4f}",
-            "n": n,
-            "d": curr_d
-        })
+        # Training step
+        model.train()
+        optimizer.zero_grad()
+        preds = model(xs, ys)
+        loss = mean_squared_error(preds, ys)
+        loss.backward()
+        optimizer.step()
 
-save_path = "standard_linear_regression.pt"
-torch.save(
-    {
-        "model_state_dict": model.state_dict(),
-        "optimizer_state_dict": optimizer.state_dict(),
-        "step": step,
-        "curriculum_n_dims": curriculum.n_dims,
-        "curriculum_n_points": curriculum.n_points,
-    },
-    save_path,
-)
-print(f"Saved checkpoint to {save_path}")
+        loss_val = loss.detach().item()
+        if ema_loss is None:
+            ema_loss = loss_val
+        else:
+            ema_loss = alpha * loss_val + (1.0 - alpha) * ema_loss
+
+        curriculum.update()
+
+        desc_dict = {
+            "loss": round(loss_val, 4),
+            "ema_loss": round(ema_loss, 4),
+            "d": n_dims_trunc,
+            "n": n_points,
+        }
+        pbar.set_description(str(desc_dict))
+
+        # Save training state (for resume)
+        if step % SAVE_EVERY_STEPS == 0:
+            training_state = {
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "train_step": step,
+            }
+            torch.save(training_state, state_path)
+
+        # Save model snapshot every KEEP_EVERY_STEPS
+        if step % KEEP_EVERY_STEPS == 0 and step > 0:
+            torch.save(
+                model.state_dict(),
+                os.path.join(OUT_DIR, f"model_{step}.pt"),
+            )
+
+
+#############################################
+# Main
+#############################################
+
+if __name__ == "__main__":
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = TransformerModel(
+        n_dims = N_DIMS,
+        n_positions = N_POSITIONS,
+        n_embd = N_EMBD,
+        n_layer = N_ATT_LAYERS,
+        n_head = N_ATT_HEADS,
+    )
+    model.to(device)
+    train(model)
