@@ -10,7 +10,7 @@ from transformers import GPT2Config, GPT2Model
 # Hyperparameters and config
 #############################################
 
-OUT_DIR = "models/linear_regression"
+OUT_DIR = "models/sparse_linear_regression"
 
 # model settings
 N_DIMS = 20
@@ -35,6 +35,8 @@ CURR_POINTS_END = 41
 CURR_POINTS_INC = 2
 CURR_INTERVAL = 2_000  # how often to update dims/points
 
+# linear regression setting
+SPARSITY = 3 # none if standard linear regression, number of nonzero weights for sparse
 
 #############################################
 # Utilities
@@ -155,11 +157,22 @@ def sample_gaussian_xs(batch_size, n_points, n_dims, n_dims_trunc, device):
     return xs
 
 
-def sample_linear_regression_weights(batch_size, n_dims, device):
+def sample_linear_regression_weights(batch_size, n_dims, device, sparsity_s = None):
     """
     Sample one weight vector per batch element, w ~ N(0, I).
     """
-    return torch.randn(batch_size, n_dims, 1, device = device)
+    w = torch.randn(batch_size, n_dims, 1, device = device)
+
+    if sparsity_s is None or sparsity_s >= n_dims:
+        return w
+
+    for b in range(batch_size):
+        idx = torch.randperm(n_dims, device = device)[:sparsity_s]
+        mask = torch.zeros(n_dims, 1, device = device, dtype = torch.bool)
+        mask[idx] = True
+        w[b, ~mask] = 0.0
+
+    return w
 
 
 def evaluate_linear_regression(xs, w, scale = 1.0):
@@ -227,6 +240,7 @@ def train(model):
             batch_size = BATCH_SIZE,
             n_dims = model.n_dims,
             device = device,
+            sparsity_s = SPARSITY
         )
         ys = evaluate_linear_regression(xs, w)  # [B, T]
 
