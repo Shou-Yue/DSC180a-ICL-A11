@@ -15,7 +15,7 @@ class CheckpointEvaluator:
         
     def load_checkpoint(self, checkpoint_path: str) -> Tuple[LinearTransformer, ExperimentConfig]:
         """Load model and config from checkpoint"""
-        checkpoint = torch.load(checkpoint_path, map_location='cpu')
+        checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=False)
         config = ExperimentConfig(**asdict(checkpoint['config']))
         model = LinearTransformer(config.d)
         model.load_state_dict(checkpoint['model_state_dict'])
