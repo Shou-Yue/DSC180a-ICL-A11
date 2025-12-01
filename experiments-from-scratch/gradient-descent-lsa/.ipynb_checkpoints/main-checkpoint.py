@@ -10,7 +10,7 @@ from transformers import GPT2Config, GPT2Model
 # Hyperparameters and config
 #############################################
 
-OUT_DIR = "models/sparse_linear_regression"
+OUT_DIR = "models/overparameterized_linear_regression"
 
 # model settings
 N_DIMS = 20
@@ -27,16 +27,16 @@ SAVE_EVERY_STEPS = 1_000
 KEEP_EVERY_STEPS = 100_000
 
 # curriculum settings
-CURR_DIMS_START = 5
+CURR_DIMS_START = 20
 CURR_DIMS_END = 20
-CURR_DIMS_INC = 1
-CURR_POINTS_START = 11
-CURR_POINTS_END = 41
-CURR_POINTS_INC = 2
+CURR_DIMS_INC = 0
+CURR_POINTS_START = 5
+CURR_POINTS_END = 15
+CURR_POINTS_INC = 1
 CURR_INTERVAL = 2_000  # how often to update dims/points
 
 # linear regression setting
-SPARSITY = 3 # none if standard linear regression, number of nonzero weights for sparse
+SPARSITY = None # none if standard linear regression, number of nonzero weights for sparse
 
 #############################################
 # Utilities
