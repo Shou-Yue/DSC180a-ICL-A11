@@ -16,9 +16,11 @@ The repository is structured as follows:
 │   └── train.py            # Training loop
 ```
 
-- include data generation details
-- training details
-- include plots
+- [todo] go into more detail about what each file does
+
+- [todo] include data generation details
+- [todo] training details: batches, epochs, etc.
+- [todo] include plots
 
 ## Getting Started
 
@@ -47,6 +49,12 @@ python train.py --setting overparameterized
 python train.py --setting sparse
 ```
 
+- [todo] specify train.py is the entry point
+- 
+
 ## Evaluation
 
 Once the transformers have been trained, run `eval.ipynb` to compare their performance with the corresponding baselines.
+
+- [todo] what evaluation metrics did we use
+- [todo] include graphs
