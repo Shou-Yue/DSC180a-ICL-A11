@@ -44,7 +44,7 @@ class TrainConfig:
 
 CONFIGS = {
     "underparameterized": TrainConfig(
-        out_dir = "test/underparameterized_linear_regression",
+        out_dir = "models/underparameterized_linear_regression",
         
         sparsity = None,
 
@@ -60,7 +60,7 @@ CONFIGS = {
     ),
 
     "overparameterized": TrainConfig(
-        out_dir = "test/overparameterized_linear_regression",
+        out_dir = "models/overparameterized_linear_regression",
         
         sparsity = None,
 
@@ -76,7 +76,7 @@ CONFIGS = {
     ),
 
     "sparse": TrainConfig(
-        out_dir = "test/sparse_linear_regression",
+        out_dir = "models/sparse_linear_regression",
         
         sparsity = 3, 
 

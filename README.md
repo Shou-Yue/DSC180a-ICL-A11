@@ -1,32 +1,48 @@
 # Investigating In-Context Learning of Linear Regression in Transformers
 
-This repository attempts to reproduce and extend the results from _What Can Transformers Learn In Context? A Case Study of Simple Functions?_ (Garg et al. 2023) and _Transformers Learn In-Context by Gradient Descent_ (Oswald et al. 2023). Specifically, I aim to show that transformers are able to achieve comparable performance to least squares for standard linear regression, LASSO for sparse linear regression, and gradient descent for overparameterized linear regression. 
+This repository attempts to reproduce and extend the results from _What Can Transformers Learn In Context? A Case Study of Simple Functions?_ (Garg et al. 2023). Specifically, I aim to show that transformers are able to achieve comparable performance to least squares for underparameterized linear regression, min-norm least squares for overparameterized linear regression, and LASSO for sparse linear regression. 
 
 ## Structure
 
 The repository is structured as follows:
 
-`experiments-from-scratch/`, this folder contains all of the code that I've written   
-├── `overparameterized-gradient-descent/`, this folder contains the code to show that gradient descent is able to achieve zero training loss on an overparameterized linear regression dataset  
-└── `gradient-descent-lsa/`, this folder contains the code to generate synthetic training data and train a transformer using curriculum learning  
+```
+├── src/
+│   ├── curriculum.py       # Training curriculum
+│   ├── data_sampler.py     # Data & task generation
+│   ├── eval.ipynb          # Evaluation versus baselines, visualizations
+│   └── losses.py           # Loss functions
+│   └── model.py            # Transformer model architecture
+│   └── train.py            # Training loop
+```
 
-`in-context-learning/`, this is the codebase provided by the authors of _What Can Transformers Learn In Context? A Case Study of Simple Functions?_  
+## Getting Started
 
-`transformers-learn-in-context-by-gradient-descent/`, this is the codebase provided by the authors of _Transformers Learn In-Context by Gradient Descent_. 
-
-## Requirements
-
-- Python 3.11
-- GPU (optional)
-
-## Running Experiments
+1. Clone the repository and switch to the correct branch.
 
 ```
 git clone https://github.com/Shou-Yue/DSC180a-ICL-A11.
 cd DSC180a-ICL-A11
 git checkout anish
-cd experiments-from-scratch
-pip3 install -r requirements.txt
 ```
 
-From here, `cd` into the folder for the experiment of interest and run the notebooks.
+2. Install the required dependencies using `conda`. 
+
+```
+conda env create -f environment.yml
+conda activate in-context-learning
+```
+
+## Training Models
+
+To train, `cd` into the `src` folder. From here, you can train a model for one of three linear regression settings: underparameterized (standard), overparamterized, or sparse. To start one of these training jobs, run the following:
+
+```
+python train.py --setting underparameterized
+python train.py --setting overparameterized
+python train.py --setting sparse
+```
+
+## Evaluation
+
+Once the transformers have been trained, run `eval.ipynb` to compare their performance with the corresponding baselines.
