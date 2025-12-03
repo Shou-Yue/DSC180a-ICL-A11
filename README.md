@@ -34,13 +34,17 @@ The repository is structured as follows:
 
 ```
 ├── src/
+│   ├── baselines.py        # Least squares and LASSO implementations
 │   ├── curriculum.py       # Training curriculum
 │   ├── data_sampler.py     # Data & task generation
 │   ├── eval.ipynb          # Evaluation versus baselines, visualizations
 │   ├── losses.py           # Loss functions
+│   ├── model_utils.py      # Model loading and evaluation functions
 │   ├── model.py            # Transformer model architecture
 │   ├── train.py            # Training loop
 ```
+
+`baselines.py` computes baseline curves for least squares, min-norm least squares, and LASSO estimators.
 
 `curriculum.py` contains the implementation of a simple curriculum scheduler that gradually increases input dimensionality and in-context examples during training.
 
@@ -49,6 +53,8 @@ The repository is structured as follows:
 `eval.ipynb` evaluates a trained transformer's in-context learning performance on linear regression tasks by generating error curves compared to baselines like least squares and LASSO. 
 
 `losses.py` defines helper functions to calculate error/loss functions between predictions and targets.
+
+`model_utils.py` contains helper functions to load models from checkpoints and also evaluate in-context learning performance.
 
 `model.py` defines the transformer architecture used for the in-context learning experiments, following a GPT-2 style backbone.
 

@@ -41,7 +41,6 @@ class TrainConfig:
     
     interval: int
 
-
 CONFIGS = {
     "underparameterized": TrainConfig(
         out_dir = "models/underparameterized_linear_regression",
@@ -93,6 +92,13 @@ CONFIGS = {
 }
 
 def train(model, cfg):
+    """
+    Runs the full training loop for a linear-regression in-context learning task
+
+    Args:
+        model: TransformerModel instance
+        cfg: TrainConfig specifying curriculum + sparsity settings
+    """
     device = next(model.parameters()).device
 
     os.makedirs(cfg.out_dir, exist_ok = True)

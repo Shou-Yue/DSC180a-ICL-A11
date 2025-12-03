@@ -27,12 +27,14 @@ class TransformerModel(nn.Module):
     @staticmethod
     def _combine(xs_b, ys_b):
         """
-        Interleave x's and y's into a single sequence.
+        Interleaves x's and y's into a single sequence
 
-        xs_b: [B, T, D]
-        ys_b: [B, T]
+        Args:
+            xs_b: [B, T, D] input vectors
+            ys_b: [B, T] corresponding scalar outputs
 
-        Returns: [B, 2T, D] where positions are x_1, y_1, x_2, y_2, ...
+        Returns:
+            zs: [B, 2T, D]  where positions are x_1, y_1, x_2, y_2, ...
         """
         bsize, points, dim = xs_b.shape
 
@@ -44,21 +46,24 @@ class TransformerModel(nn.Module):
             dim = 2,
         )
 
-        # zs[:, 0] = x_1, zs[:, 1] = y_1, zs[:, 2] = x_2, zs[:, 3] = y_2, ...
         zs = torch.stack((xs_b, ys_b_wide), dim = 2)
         zs = zs.view(bsize, 2 * points, dim)
         return zs
 
     def forward(self, xs, ys):
         """
-        xs: [B, T, D]
-        ys: [B, T]
+        Returns predictions for all y positions
 
-        Returns predictions for all y positions: [B, T]
+        Args:
+            xs: [B, T, D] input vectors
+            ys: [B, T] ground-truth outputs
+
+        Returns:
+            pred: [B, T]
         """
         zs = self._combine(xs, ys)
         embeds = self.read_in(zs)
         output = self.backbone(inputs_embeds = embeds).last_hidden_state
-        prediction = self.read_out(output)          # [B, 2T, 1]
-        prediction = prediction[:, ::2, 0]          # keep only x positions -> [B, T]
+        prediction = self.read_out(output)
+        prediction = prediction[:, ::2, 0]
         return prediction
