@@ -16,6 +16,10 @@ The repository is structured as follows:
 │   └── train.py            # Training loop
 ```
 
+- include data generation details
+- training details
+- include plots
+
 ## Getting Started
 
 1. Clone the repository and switch to the correct branch.
