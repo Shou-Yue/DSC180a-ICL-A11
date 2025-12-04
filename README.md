@@ -1,5 +1,19 @@
-For Checkpoint:
+## Project Overview
 
-We have been focusing extensively on research and understanding how in-context learning works by reading papers, watching relevant videos, and working with published code. I've read 4 papers, which I've described in the literature review section of the checkpoint report. To date, I have not yet started reproducing a paper from scratch, which is the goal of our Q1 project (along with testing with some different settings, data distributions, model architectures). This will be done over the next few weeks. In this repository contains the code from the paper whos setting we will reproduce (https://arxiv.org/pdf/2410.01774). I had to fix some of the code within the classification_icl.py file as the original code did not run successfully. In the plots folder contains the reproduced plots that I created after fixing the code and running it. We see that it differs slightly from the original paper, likely as a result of how I changed the code, but the main conclusions are the same. Over the next week, as I continue working with and understanding this code, I will complete the reproduction of the paper from scratch. 
+This project aims to reproduce the setting in the paper Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context (https://arxiv.org/abs/2410.01774). The main goal is to show how a single layer linear transformer learns an optimal solution to binary classification problems in-context. Furthermore, we show the presence of benign overfitting, in which the model showcases an ability to memorize noisy (flipped) data but still generalize accurately to unseen data.
 
-Also to explain why there is only one commit - again, we spent the first 5 weeks just reading papers and trying to understand the mechanisms of in-context learning. We only found out during our TA checkpoint that we were expected to maintain a repo with regular commits. I committed the code I described above, but have not been able to work much on it this week (Week 6) as I am home for my sister's wedding. I will continue regular commits starting Week 7. Thank you!
+There are 4 major steps to this reproduction (found at icl_repro/icl.ipynb). These are Data Generation, Model Architecture, Model Training, and Evaluation and Plots. The full pipeline is handled by this notebook.
+
+
+## How to Run the Project
+
+### Environment Setup
+Conda Instructions:
+
+conda create -n icl_repro python=3.10
+conda activate icl_repro
+pip install -r requirements.txt
+
+Core Dependencies: Python 3.10+, PyTorch, NumPy, Matplotlib, tqdm
+
+This code was created with the intention of running on CPU. If you are using a GPU, simply change device = "cpu" to device = "cuda". Note that you may have to move models and tensors to the device with .to(device).
