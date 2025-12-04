@@ -147,8 +147,8 @@ results/figures/
 python scripts/run_ood.py
 
 4. Inspect output:
-results/logs/ood_scaling.csv  
-results/figures/ood_scaling_r2.png  
+- results/logs/ood_scaling.csv  
+- results/figures/ood_scaling_r2.png  
 
 ---
 
