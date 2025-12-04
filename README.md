@@ -111,7 +111,8 @@ n_tasks = 1000
 ## 1. Task Generation
 - Samples W in R^d
 - Samples inputs x_i uniformly from [-alpha, alpha]^d
-- Computes outputs y_i = W^T x_i
+- Random ε ~ N(0, noise^2)
+- Computes outputs y_i = W^T x_i + ε
 - Samples a test input x_test
 
 ## 2. Prompt Construction
