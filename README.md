@@ -89,8 +89,8 @@ This experiment:
 
 Parameter | Description | Default
 --------- | ----------- | --------
-d | Input dimension | 10
-N | Number of in-context examples (2*d + 1) | 21
+d | Input dimension | 20
+N | Number of in-context examples (2*d + 1) | 42
 alphas | Input scale values | [0.5, 1.0, 1.5, 2.0]
 eta | GD-1 learning rate | 1.0
 n_tasks | Tasks per α | 5–1000
