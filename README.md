@@ -10,25 +10,23 @@ Each task provides N = 2d + 1 input–output examples and one test query. The mo
 
 ```
 .
-├── src/ \n
-│   ├── __init__.py \n
-│   ├── tasks.py         # Regression task generator \\
-│   ├── baselines.py     # GD-1 closed-form baseline\\
-│   ├── prompting.py     # Prompt builder for GPT-5\\
-│   ├── llm.py           # OpenAI API wrapper\\
-│   ├── eval.py          # Evaluate regression suites\\
-│   └── experiments.py   # OOD scaling experiments\\
-│ \\
-├── scripts/ \\
-│   ├── __init__.py \\
+├── src/
+│   ├── __init__.py 
+│   ├── tasks.py         # Regression task generator 
+│   ├── baselines.py     # GD-1 closed-form baseline
+│   ├── prompting.py     # Prompt builder for GPT-5
+│   ├── llm.py           # OpenAI API wrapper
+│   ├── eval.py          # Evaluate regression suites
+│   └── experiments.py   # OOD scaling experiments
+│ 
+├── scripts/ 
+│   ├── __init__.py 
 │   └── run_ood.py       # Run out-of-distribution scaling experiment
 │
 ├── results/             # Created automatically on first run
 │   ├── logs/            # CSV metric logs
 │   └── figures/         # Saved plots
-│
-├── .env                 # User-provided API keys (not committed)
-├── .env.example         # Template for users
+├── requirements.txt     # Requirements/dependencies
 └── README.md
 ```
 
