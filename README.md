@@ -8,9 +8,10 @@ Each task provides N = 2d + 1 input–output examples and one test query. The mo
 
 # Repository Structure
 
+```
 .
-├── src/ \\
-│   ├── __init__.py \\
+├── src/ \n
+│   ├── __init__.py \n
 │   ├── tasks.py         # Regression task generator \\
 │   ├── baselines.py     # GD-1 closed-form baseline\\
 │   ├── prompting.py     # Prompt builder for GPT-5\\
@@ -29,6 +30,7 @@ Each task provides N = 2d + 1 input–output examples and one test query. The mo
 ├── .env                 # User-provided API keys (not committed)
 ├── .env.example         # Template for users
 └── README.md
+```
 
 results/ starts empty and is populated when experiments run.
 
@@ -42,7 +44,7 @@ Python 3.10–3.11
 ## Create Virtual Environment
 python -m venv .venv
 source .venv/bin/activate
-# Windows: .venv\Scripts\activate
+Windows: .venv\Scripts\activate
 
 ## Install Dependencies
 pip install -r requirements.txt
@@ -64,9 +66,6 @@ Create a file named .env at the project root:
 OPENAI_API_KEY=sk-...
 GPT5_MODEL=gpt-5
 LLM_BACKEND=openai
-
-Never commit .env.  
-A .env.example template is included for collaborators.
 
 ---
 
