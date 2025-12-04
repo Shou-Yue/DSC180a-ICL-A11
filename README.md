@@ -189,3 +189,7 @@ This plot shows the in-context learning curve for the overparameterized setting,
 ![](imgs/sparse_plot.png)
 
 This plot shows the in-context learning curve for the sparse setting, where the true weight vector has only a few nonzero entries. The transformer (blue) closely matches the performance of LASSO (red), which is the classical method designed for sparse regression. Both methods improve rapidly as they see more examples and reach near-zero error with roughly the same number of in-context points. Standard least squares (orange) performs noticeably worse in this regime because it does not account for sparsity.
+
+### References
+
+Code was taken and modified from this [repository](https://github.com/dtsip/in-context-learning/tree/main), provided by the authors of _What Can Transformers Learn In Context? A Case Study of Simple Functions?_ (Garg et al. 2023).
