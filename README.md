@@ -61,9 +61,8 @@ Manual package list:
 
 Create a file named .env at the project root:
 
-OPENAI_API_KEY=sk-...
-GPT5_MODEL=gpt-5
-LLM_BACKEND=openai
+OPENAI_API_KEY=sk-... \n
+GPT5_MODEL=gpt-4.1-mini \n
 
 ---
 
@@ -78,7 +77,7 @@ python scripts/run_ood.py
 This experiment:
 - Samples regression tasks with y = W^T x
 - Builds in-context prompts
-- Queries GPT-5 for predictions
+- Queries GPT-4.1 mini for predictions
 - Computes MSE and R² vs GD-1
 - Saves:
   results/logs/ood_scaling.csv
@@ -95,7 +94,7 @@ N | Number of in-context examples (2*d + 1) | 21
 alphas | Input scale values | [0.5, 1.0, 1.5, 2.0]
 eta | GD-1 learning rate | 1.0
 n_tasks | Tasks per α | 5–1000
-GPT5_MODEL | OpenAI model name | gpt-5
+GPT5_MODEL | OpenAI model name | gpt-4.1-mini
 
 Example:
 
@@ -121,7 +120,7 @@ n_tasks = 1000
 ...
 Predict the output for: x_test
 
-GPT-5 returns a numeric prediction.
+GPT returns a numeric prediction.
 
 ## 3. GD-1 Baseline
 W_1 = (eta / N) * X^T y  
