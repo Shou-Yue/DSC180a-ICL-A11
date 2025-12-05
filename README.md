@@ -107,6 +107,11 @@ conda create -n icl_repro python=3.10
 conda activate icl_repro
 pip install -r requirements.txt
 ```
+Alternatively, the environment can also be recreated using the provided environment.yml file:
+```
+conda env create -f environment.yml -n icl_repro
+conda activate icl_repro
+```
 
 Core Dependencies: Python 3.10+, PyTorch, NumPy, Matplotlib, tqdm
 
