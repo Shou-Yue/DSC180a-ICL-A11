@@ -1,0 +1,17 @@
+name: in-context-learning
+channels:
+  - pytorch
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip=21.2.4
+  - pytorch=1.11.0
+
+  - pip:
+      - torch==2.9.1
+      - numpy==2.2.6
+      - matplotlib==3.10.7
+      - tqdm==4.67.1
+      - filelock==3.20.0
+
