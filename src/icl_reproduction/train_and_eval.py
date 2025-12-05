@@ -101,14 +101,14 @@ def train_model(
 #run experiments and plot 
 
 #training loop will run with all values in index 0, then 1, etc.
-d_vals       = [1000, 1500, 2000]
+d_vals       = [500, 1000, 1500]
 n_vals       = [20,   20,   20]
-b_vals       = [1000, 1500, 2000]             
+b_vals       = [1000, 1000, 1000]             
 r_vals = [d**0.3 for d in d_vals]
 #Comment below line if r will stay the same relative to d for all experiments
-r_vals = [1500**0.3, 20**0.1, 50**0.5]
-flips_train = [0, 0, 0]
-flips_val = [0.2, 0.2, 0.2]
+#r_vals = [1500**0.3, 20**0.1, 50**0.5]
+flips_train = [0.3, 0.3, 0.3]
+flips_val = [0.3, 0.3, 0.3]
 
 steps = 300
 device = "cpu"
