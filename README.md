@@ -83,8 +83,10 @@ The repository is structured as follows:
 │ │ ├── model.py                 # Linear transformer classifier implementation
 │ │ ├── train_and_eval.py        # Training loop, evaluation logic, metric logging
 |
-├── README.md # Project documentation
-├── requirements.txt # Python dependencies
+├── README.md                    # Project documentation
+├── requirements.txt             # Python dependencies
+├── environment.yml              # Environment file
+
 ```
 
 `icl_classification/` contains all of the code published by the authors of Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context (2024). The README.md in this directory can be referenced to run their experiments.
