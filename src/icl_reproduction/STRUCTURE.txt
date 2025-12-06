@@ -1,0 +1,203 @@
+"""
+STRUCTURE OVERVIEW: ICL Reproduction Scripts
+
+All Python scripts have been organized into three logical modules:
+Models | Training | Evaluation/Plotting
+
+Directory Contents:
+===================
+
+Core Modules (3 files):
+  ✓ models.py              - Model implementations
+  ✓ training.py            - Training utilities and datasets  
+  ✓ evaluation.py          - Evaluation and visualization
+  ✓ __init__.py            - Package initialization
+
+Example Scripts (4 files):
+  ✓ example_1_linear_transformer.py          - Basic training demo
+  ✓ example_2_batch_scaling.py               - Scaling experiment
+  ✓ example_3_gd_vs_ridge.py                 - Baseline comparison
+  ✓ example_comprehensive_pipeline.py        - Full pipeline demo
+
+Documentation:
+  ✓ README_SCRIPTS.md      - Detailed module documentation
+
+Original Notebooks (unchanged):
+  ├── Notebooks/
+  │   ├── icl.ipynb
+  │   ├── icl_linear_class_single_layer.ipynb
+  │   ├── gd_icl_comparison.ipynb
+  │   ├── icl_with_llama_linear_class.ipynb
+  │   └── sla_model_vs_task_size.ipynb
+
+
+Module Breakdown:
+=================
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      MODELS.PY                                   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  LinearTransformer(d)                                             │
+│  ├─ forward()                                                    │
+│  └─ compute_in_context_preds()                                   │
+│                                                                   │
+│  SingleLayerTransformer(d_input, d_model, dropout)               │
+│  ├─ forward()                                                    │
+│  └─ predict()                                                    │
+│                                                                   │
+│  LinearClassifier(d)                                              │
+│  ├─ forward()                                                    │
+│  └─ compute_in_context_preds()                                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                    TRAINING.PY                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Datasets:                                                        │
+│  ├─ BinaryClassificationDataset()    [mini-batch training]       │
+│  └─ GaussianMixtureDataset()         [full-batch training]       │
+│                                                                   │
+│  Training Functions:                                              │
+│  ├─ train_epoch()                                                │
+│  ├─ evaluate()                                                   │
+│  ├─ train_linear_transformer()                                   │
+│  └─ train_model()                                                │
+│                                                                   │
+│  Baselines:                                                       │
+│  ├─ gd_solution()                                                │
+│  ├─ ridge_solution()                                             │
+│  └─ gd_step()                                                    │
+│                                                                   │
+│  Utilities:                                                       │
+│  └─ data_gen()                                                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                  EVALUATION.PY                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│  Evaluation:                                                      │
+│  ├─ evaluate_linear_transformer()                                │
+│  ├─ compare_gd_and_ridge()                                       │
+│  └─ compute_metrics()                                            │
+│                                                                   │
+│  Plotting Functions:                                              │
+│  ├─ plot_training_curves()                                       │
+│  ├─ plot_batch_size_scaling()                                    │
+│  ├─ plot_gd_vs_ridge_comparison()                                │
+│  ├─ plot_accuracy_comparison()                                   │
+│  └─ plot_multiscale_comparison()                                 │
+│                                                                   │
+│  Utilities:                                                       │
+│  ├─ generate_gaussian_mixture_task()                             │
+│  └─ print_experiment_summary()                                   │
+│                                                                   │
+└─────────────────────────────────────────────────────────────────┘
+
+
+Quick Start Examples:
+====================
+
+Run the basic example:
+  $ python example_1_linear_transformer.py
+
+Run the scaling experiment:
+  $ python example_2_batch_scaling.py
+
+Compare baselines:
+  $ python example_3_gd_vs_ridge.py
+
+Run full pipeline:
+  $ python example_comprehensive_pipeline.py
+
+
+Python Usage Example:
+====================
+
+from models import LinearTransformer
+from training import GaussianMixtureDataset, train_linear_transformer
+from evaluation import evaluate_linear_transformer, plot_batch_size_scaling
+
+# Create data
+dataset = GaussianMixtureDataset(d=100, N=20, B=500, R=1.0)
+
+# Train model
+model = LinearTransformer(d=100)
+train_linear_transformer(model, dataset, num_epochs=50)
+
+# Evaluate
+test_acc, ic_acc = evaluate_linear_transformer(model, dataset)
+
+# Plot
+plot_batch_size_scaling([100, 200, 500], [0.6, 0.7, 0.8], 
+                        [0.5, 0.6, 0.7], save_path='results.png')
+
+
+File Dependencies:
+==================
+
+example_1_linear_transformer.py
+  ├── models.py (LinearTransformer)
+  ├── training.py (BinaryClassificationDataset, train_epoch, evaluate)
+  └── evaluation.py (plot_training_curves)
+
+example_2_batch_scaling.py
+  ├── models.py (LinearTransformer)
+  ├── training.py (GaussianMixtureDataset, train_linear_transformer)
+  └── evaluation.py (evaluate_linear_transformer, plot_batch_size_scaling)
+
+example_3_gd_vs_ridge.py
+  ├── training.py (gd_solution, ridge_solution)
+  └── evaluation.py (compare_gd_and_ridge, compute_metrics, plotting)
+
+example_comprehensive_pipeline.py
+  ├── models.py (all model classes)
+  ├── training.py (all training utilities)
+  └── evaluation.py (all evaluation utilities)
+
+
+Output Files:
+=============
+
+Running the examples generates:
+  - training_curves.png
+  - batch_size_scaling.png
+  - gd_vs_ridge_predictions.png
+  - gd_vs_ridge_accuracy.png
+  - exp1_training_curves.png
+  - exp2_gd_vs_ridge.png
+  - exp2_accuracy_comparison.png
+  - exp3_batch_scaling.png
+
+
+Total Files Created:
+====================
+
+Core:           3 files (models, training, evaluation)
+Packages:       1 file  (__init__)
+Examples:       4 files (example_1, 2, 3, comprehensive)
+Docs:           1 file  (README_SCRIPTS)
+─────────────────────────
+Total:          9 Python files + documentation
+
+
+Next Steps:
+===========
+
+1. Review individual module docstrings:
+   - models.py for available model classes
+   - training.py for data generation and training
+   - evaluation.py for metrics and visualizations
+
+2. Run example scripts to understand the pipeline
+
+3. Create custom scripts by importing from the modules
+
+4. Refer to README_SCRIPTS.md for detailed API documentation
+
+5. Check notebook files for additional context and experiments
+"""
