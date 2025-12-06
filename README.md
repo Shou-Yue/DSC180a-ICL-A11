@@ -22,7 +22,9 @@ This project investigates how transformers perform in-context learning on linear
 ├── configs/            # Configuration files (JSON)
 ├── checkpoints/        # Model checkpoints
 ├── results/            # Evaluation results and plots
-│   └── lsa_multilayer/ # LSA experiment results
+│   └── lsa_experiments/
+│       └── final_results/  # Final LSA multi-layer results
+├── archive/           # Old documentation and results
 └── scripts/            # Training and evaluation scripts
     ├── lsa_gd_multilayer.py      # Multi-layer LSA experiments
     ├── plot_lsa_multilayer.py    # LSA visualization
@@ -231,8 +233,8 @@ python scripts/plot_lsa_multilayer.py
 
 # Or specify custom paths
 python scripts/plot_lsa_multilayer.py \
-  --results_file ./results/lsa_multilayer/all_results.json \
-  --output_dir ./results/lsa_multilayer
+  --results_file ./results/lsa_experiments/final_results/all_results.json \
+  --output_dir ./results/lsa_experiments/final_results
 ```
 
 **Generated plots:**
@@ -255,10 +257,9 @@ We evaluate LSA on random test points and solve w = (X^T X)^{-1} X^T ŷ to recov
 **GD Crossover Explanation:**
 At L≥16, GD's analytical convergence outpaces LSA's learned optimization. LSA approximation errors compound across many layers, while GD remains exact.
 
-### References
+### Additional Documentation
 
-- **LSA experiments:** `README_lsa.md` (detailed documentation)
-- **AWS workflow:** `AWS_WORKFLOW.md`
+- **Archived docs:** See `archive/` for detailed implementation notes, AWS workflow, and previous results
 - **Paper:** [Oswald et al., NeurIPS 2023](https://arxiv.org/abs/2212.07677)
 
 ---
