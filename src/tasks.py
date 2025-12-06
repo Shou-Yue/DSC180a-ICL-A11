@@ -13,7 +13,7 @@ class RegrTask:
 
 
 def sample_regr_task(
-    d: int = 10,
+    d: int = 5,
     N: Optional[int] = None,
     alpha: float = 1.0,
     noise: float = 0.0,

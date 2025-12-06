@@ -1,6 +1,6 @@
 # In-Context Learning Replication — Linear Regression
 
-This repository reproduces experiments testing whether large language models (LLMs) such as GPT-5 exhibit gradient-descent-like in-context learning (ICL) on simple linear regression tasks.
+This repository reproduces experiments testing whether large language models (LLMs) such as GPT-4.1-mini exhibit gradient-descent-like in-context learning (ICL) on simple linear regression tasks.
 
 Each task provides N = 2d + 1 input–output examples and one test query. The model’s prediction is compared to a closed-form one-step gradient descent baseline (GD-1).
 

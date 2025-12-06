@@ -29,7 +29,7 @@ from src.results import run_ood_scaling
 def main() -> None:
     results_dir = PROJECT_ROOT / "results"
 
-    d = 10
+    d = 40
     N = 2 * d + 1
     eta = 1.0
     alphas = [0.5, 1.0, 1.5, 2.0]

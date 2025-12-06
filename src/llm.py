@@ -1,38 +1,54 @@
 import os
 from typing import Optional
 
-import openai
-
-GPT5_MODEL = os.environ.get("GPT5_MODEL", "gpt-5")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-
-if not OPENAI_API_KEY:
-    raise EnvironmentError(
-        "OPENAI_API_KEY not set; export it in your environment before running."
-    )
-
-openai.api_key = OPENAI_API_KEY
+from openai import OpenAI, APITimeoutError
 
 
-def openai_predict(prompt: str, model_name: Optional[str] = None) -> float:
-    """
-    GPT API inference. Returns a float parsed from the model's text output.
-    This matches the usage in your notebook: the model is expected to output
-    a bare float as text.
-    """
-    if model_name is None:
-        model_name = GPT5_MODEL
-    client = openai.OpenAI()
-    response = client.responses.create(
-        model=model_name,
-        input=prompt,
-    )
-    return float(response.output_text)
+def _get_client(timeout: float = 10.0) -> OpenAI:
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY not set in environment")
+    # global timeout for httpx
+    return OpenAI(api_key=api_key, timeout=timeout)
 
 
-def llm_predict(prompt: str) -> float:
-    """
-    Route to the active backend. Currently only the OpenAI backend is wired up,
-    mirroring the original notebook.
-    """
-    return openai_predict(prompt)
+def _openai_predict(prompt: str, model_name: Optional[str] = None) -> Optional[float]:
+    client = _get_client(timeout=10.0)  # shorten how long we wait
+
+    model = model_name or os.getenv("GPT5_MODEL") or "gpt-4.1-mini"
+
+    try:
+        resp = client.responses.create(
+            model=model,
+            input=prompt,
+        )
+    except APITimeoutError:
+        print("[WARN] OpenAI request timed out; skipping this task.")
+        return None
+    except Exception as e:
+        print(f"[WARN] OpenAI request failed: {e!r}")
+        return None
+
+    # Depending on SDK version; this is the common pattern
+    try:
+        text = resp.output_text
+    except AttributeError:
+        text = resp.output[0].content[0].text
+
+    try:
+        return float(text.strip())
+    except ValueError:
+        print(f"[WARN] Could not parse float from model output: {text!r}")
+        return None
+
+
+def _mock_predict(prompt: str) -> float:
+    # Fast deterministic placeholder for debugging. You can change this.
+    return 0.0
+
+
+def llm_predict(prompt: str) -> Optional[float]:
+    backend = os.getenv("LLM_BACKEND", "openai")
+    if backend.lower() == "mock":
+        return _mock_predict(prompt)
+    return _openai_predict(prompt)

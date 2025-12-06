@@ -6,7 +6,7 @@ FLOAT_RE = re.compile(r"[-+]?(?:\d*\.\d+|\d+)(?:[eE][-+]?\d+)?")
 TOKEN_RE = re.compile(r"(?<!\d)[\+\-]?1(?!\d)")  # standalone -1, +1, or 1
 
 
-def fmtv(x, digits: int = 5) -> str:
+def fmtv(x, digits: int = 3) -> str:
     return ", ".join(f"{v:.{digits}f}" for v in x.tolist())
 
 
@@ -19,8 +19,8 @@ def build_prompt(t: RegrTask, digits: int = 5) -> str:
     )
     xs = fmtv(t.x_test, digits)
     return (
-        "You are solving a regression task \n"
-        "Given training pairs (x -> y), predict unseen y"
+        "You are solving a noisy linear regression task \n"
+        "Given training pairs (x -> y), predict unseen y \n"
         f"{ctx}\n\nx_test = [{xs}]\n"
-        "Respond with a single float rounded to 4 digits, ex: 1.5344"
+        "Respond ONLY with a single float rounded to 3 digits and no other text at all, ex: 1.534"
     )
