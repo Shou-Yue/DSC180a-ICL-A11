@@ -1,31 +1,24 @@
-# In-Context Learning: Investigating Emergent Optimization in Large Language Models
+# Analysis of In-Context Learning on Linear Classification Tasks
 
-This repository contains research code, experiments, and analysis conducted as part of the **DSC 180A Capstone Program** at **UC San Diego (UCSD)**, **Section A11**, under the supervision of **Professor Arya Mazumdar**.
+## Project Overview
 
----
+## Structure
 
-## 📘 Project Overview
+├── README.md
+├── icl_classification
+│   ├── __init__.py
+│   ├── checkpoints                                 # Model checkpoints
+│   ├── classification_icl.py                       # Training loop for simple transformer model
+│   ├── eval_and_plot.py                            # Where models are evaluated and plots are created
+│   ├── gpt.py                                      # Training loop for GPT-2 architecture
+│   ├── plots                                       # Where result plots are stored
+│   ├── test.py                                     # Testing code functionality
+│   ├── test_results                                # Results of simple transformer
+│   └── test_results_gpt                            # Results of GPT-2 transformer
+├── notebooks
+│   ├── gpt_test.ipynb                              # Notebook for running with GPT-2 arhitecture
+│   ├── test_B_values.ipynb                         # Notebook containing experiments with differing B values (# tasks)
+│   └── test_d_values.ipynb                         # Notebook containing experiments with differing D values (model dimension)
+└── requirements.txt                                # Packages required to run project
 
-Our project explores **in-context learning** (ICL) — the ability of large language models (LLMs) to perform implicit learning and generalization within a single prompt. Specifically, we investigate whether pretrained Transformer architectures can replicate **gradient-descent-like behavior** when exposed to input–output examples formatted as contextual demonstrations.
-
----
-
-## ⚙️ Setup & Installation
-
-Clone the repository and install dependencies:
-
-```bash
-git clone https://github.com/<your-org-or-username>/DSC180a-ICL-A11.git
-cd DSC180a-ICL-A11
-```
-
-You may also need access to a Hugging Face token or OpenAI API key depending on the chosen models.
-
----
-
-
-## 👥 Authors & Contributions
-
-This project was developed collaboratively by the **DSC 180A Section A11** student team.
-Each branch reflects **individual experimentation**, **model adaptation**, and **analysis notebooks**.
-Please refer to the branch README files for contributor-specific details.
+## How to Run
