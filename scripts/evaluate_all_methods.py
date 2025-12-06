@@ -87,8 +87,11 @@ def evaluate_all_methods(model, data_sampler, n_dims, n_points_list, n_eval=1000
                 ys_test = task.evaluate(xs_test)
                 
                 # 1. Transformer prediction
+                # Concatenate train and test, but use dummy value for test y
                 xs_full = torch.cat([xs_train, xs_test], dim=1)
-                ys_full = torch.cat([ys_train, ys_test], dim=1)
+                # Use zeros as placeholder for test y (model shouldn't see it)
+                ys_dummy = torch.zeros_like(ys_test)
+                ys_full = torch.cat([ys_train, ys_dummy], dim=1)
                 y_pred_transformer = model(xs_full, ys_full, inds=[-1])
                 transformer_error = ((y_pred_transformer - ys_test) ** 2).item()
                 errors['transformer'][n_points].append(transformer_error)

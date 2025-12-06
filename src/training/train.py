@@ -10,12 +10,12 @@ import torch.nn as nn
 from tqdm import tqdm
 
 # Add parent directory to path for imports
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(Path(__file__).parent.parent.parent))
 
-from data.samplers import GaussianSampler
-from data.tasks import LinearRegressionTask, mean_squared_error
-from data.curriculum import Curriculum
-from models.transformer import InContextTransformer
+from src.data.samplers import GaussianSampler
+from src.data.tasks import LinearRegressionTask, mean_squared_error
+from src.data.curriculum import Curriculum
+from src.models.transformer import InContextTransformer
 
 
 class Trainer:
@@ -97,10 +97,12 @@ class Trainer:
         self.model.train()
         self.optimizer.zero_grad()
         
-        # Forward pass
+        # Forward pass - use true ys for training (model predicts at y positions)
+        # The model architecture predicts at y positions (1, 3, 5, ...)
+        # where it has seen the corresponding x but not the y yet (causal masking)
         predictions = self.model(xs, ys)
         
-        # Compute loss
+        # Compute loss - this is correct, we compare predictions to true ys
         loss = mean_squared_error(predictions, ys)
         
         # Backward pass
