@@ -166,7 +166,6 @@ python scripts/lsa_gd_multilayer.py \
 - Data: x ~ N(0, I_d), w ~ N(0, I_d), y = w^T x
 - Optimizer: Adam
 - Loss: Mean Squared Error
-- Training time: ~2.5 hours for all layers on GPU (NVIDIA L4)
 
 ### Evaluation Metrics
 
@@ -210,8 +209,8 @@ For GPU training, use the automated AWS workflow:
 # 1. Deploy to AWS (automatically packages and uploads code)
 ./scripts/aws_lsa_deploy.sh
 
-# 2. SSH into AWS and run experiment
-ssh -i ~/.ssh/ask-hammerspace.pem ec2-user@18.118.222.12
+# 2. SSH into AWS instance and run experiment
+ssh -i ~/.ssh/your-key.pem ec2-user@your-instance-ip
 cd ~/lsa-icl
 source venv/bin/activate
 python scripts/lsa_gd_multilayer.py \
@@ -222,7 +221,7 @@ python scripts/lsa_gd_multilayer.py \
 ./scripts/aws_lsa_retrieve.sh
 ```
 
-See `AWS_WORKFLOW.md` for detailed instructions.
+**Note:** AWS credentials are configured in the deployment scripts. See `AWS_WORKFLOW.md` for setup instructions.
 
 ### Visualization
 
