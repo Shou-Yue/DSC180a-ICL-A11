@@ -4,6 +4,18 @@
 
 This project reproduces and extends the experimental setting from the paper *Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context* (2024). The main objective is to understand how transformers — beginning with a simplified one-layer linear attention model — perform **in-context learning (ICL)** for binary classification tasks.
 
+This project is also extended to answer the below key questions:
+
+RQ1: For transformers trained on Gaussian mixture tasks, how does in-context test accuracy
+scale with dimension d, number of tasks B, and sequence length N?
+
+RQ2: Under what conditions does the model exhibit benign overfitting, i.e., memorize noisy
+in-context labels while still achieving high test accuracy?
+
+RQ3: Are the phenomena described theoretically for linear attention transformers pre-
+served when using full transformer architectures (decoder-only, encoder-only)? How do
+the results change when full transformer architectures are used?
+
 The model is given a sequence of labeled examples:
 
 $$(x_1, y_1), (x_2, y_2), \ldots, (x_N, y_N)$$
@@ -71,22 +83,40 @@ These parameters define the full synthetic environment in which the transformer 
 The repository is structured as follows:
 
 ```
-├── results/                     # Saved plots, experiment outputs
+├── results/                     # Saved plots, experiment outputs (e.g. results/rq1/ for RQ1)
 │
 ├── src/
-│ ├── icl_classification/        # Code from reference paper Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context (2024). 
-│ ├── icl_reproduction/          # My reproduction of paper environment from scratch
+│ ├── icl_classification/        # Code from reference paper Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context (2024).
+│ │
+│ ├── icl_reproduction/           # Reproduction of paper environment and RQ experiments
 │ │ ├── notebooks/               # Jupyter notebooks for running experiments and plotting
-│ │ │ ├── icl.ipynb              # Full pipeline code
+│ │ │ └── icl.ipynb              # Full pipeline code
+│ │ │
+│ │ ├── experiments/             # RQ1 experiment runner and plotting
+│ │ │ ├── runner.py              # Single-run execution, logging (config.json, metrics.csv, summary.json)
+│ │ │ └── plots.py               # Sweep curves, heatmaps, learning curves
+│ │ │
+│ │ ├── rq1/                     # RQ1: linear classifier scaling (d, N, B)
+│ │ │ └── run_rq1.py             # CLI entrypoint for RQ1 sweeps and optional noise runs
+│ │ │
+│ │ ├── rq2/                     # RQ2: reference paper classification with LLM backends
+│ │ │ ├── icl_classification/    # Model/dataset code (classification_icl, gpt, llama, gemma, mistral, datasets)
+│ │ │ └── notebooks/             # Experiment notebooks (e.g. test_d_values, test_B_values)
+│ │ │
+│ │ ├── rq3/                     # RQ3: LLM provider interface and app
+│ │ │ ├── llm_providers.py
+│ │ │ ├── app.py
+│ │ │ └── results/               # RQ3 outputs (e.g. accuracy_results.jsonl)
 │ │ │
 │ │ ├── data.py                  # Synthetic Gaussian mixture dataset generator
-│ │ ├── model.py                 # Linear transformer classifier implementation
-│ │ ├── train_and_eval.py        # Training loop, evaluation logic, metric logging
-|
+│ │ ├── model.py                 # Linear classifier and mini transformer
+│ │ ├── model_exp.py             # Experimental model variants
+│ │ ├── core.py                  # Shared evaluate/train helpers (optional use)
+│ │ └── train_and_eval.py        # Training loop, evaluation logic, metric logging
+│ │
 ├── README.md                    # Project documentation
 ├── requirements.txt             # Python dependencies
 ├── environment.yml              # Environment file
-
 ```
 
 `icl_classification/` contains all of the code published by the authors of Trained Transformer Classifiers Generalize and Exhibit Benign Overfitting In-Context (2024). The README.md in this directory can be referenced to run their experiments.

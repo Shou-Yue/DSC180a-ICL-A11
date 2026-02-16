@@ -1,0 +1,17 @@
+{
+  "d": 500,
+  "n": 40,
+  "b": 100,
+  "r_mode": "const",
+  "r_value": 6.45,
+  "r_resolved": 6.45,
+  "flip_train": 0.0,
+  "flip_val": 0.0,
+  "steps": 1000,
+  "lr": 0.01,
+  "eval_every": 50,
+  "log_every": 10,
+  "device": "cpu",
+  "seed": 1,
+  "exp_name": "rq1_linear_scaling"
+}
