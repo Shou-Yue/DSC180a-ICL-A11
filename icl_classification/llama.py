@@ -13,7 +13,7 @@ from datetime import datetime
 import multiprocessing as mp 
 from functools import partial 
 import filelock 
-from transformers import GPT2Model
+from transformers import LlamaModel
 from icl_classification.datasets import GaussianMixtureDataset
 
 
@@ -49,39 +49,41 @@ class ExperimentConfig:
             self.experiment_name = f"d{self.d}_N{self.N}_B{self.B}_R{self.R}_{timestamp}"
 
 
-class GPT2Transformer(nn.Module):
+class LlamaTransformer(nn.Module):
     """
-    GPT-2 version of the LinearTransformer.
+    LLaMA version of the LinearTransformer.
     - Operates on vector tokens (context_x, target_x).
-    - Preserves all method names and signatures.
-    - Uses GPT-2 hidden states instead of W @ x operations.
+    - Preserves original API.
+    - Uses LLaMA hidden states instead of linear attention.
     """
-    def __init__(self, d: int, model_name="gpt2"):
+    def __init__(self, d: int, model_name="TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T"):
         super().__init__()
         self.d = d
 
-        # Load GPT-2
-        self.gpt2 = GPT2Model.from_pretrained(model_name)
+        # Load LLaMA
+        self.llama = LlamaModel.from_pretrained(model_name)
 
-        # Replace token embedding with projection from ℝ^d → ℝ^H
-        H = self.gpt2.config.hidden_size
+        # LLaMA hidden size
+        H = self.llama.config.hidden_size
+
+        # Project R^d -> R^H for vector tokens
         self.input_proj = nn.Linear(d, H)
 
-        # Classification head
+        # Binary classification head
         self.head = nn.Linear(H, 1)
 
-    def _gpt2_encode(self, tokens):
+    def _llama_encode(self, tokens):
         """
-        tokens: (B, T, d) vector inputs
-        returns: final hidden states (B, T, H)
+        tokens: (B, T, d)
+        returns: (B, T, H)
         """
-        x = self.input_proj(tokens)               # (B, T, H)
-        out = self.gpt2(inputs_embeds=x).last_hidden_state
+        x = self.input_proj(tokens)  # (B, T, H)
+        out = self.llama(inputs_embeds=x).last_hidden_state
         return out
 
-    # ----------------------------------------------------------------------
-    # Matches original API: _predict_single(context_x, context_y, target_x)
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Matches original API
+    # ------------------------------------------------------------------
     def _predict_single(self, context_x, context_y, target_x):
         """
         context_x: (B, N, d)
@@ -91,68 +93,58 @@ class GPT2Transformer(nn.Module):
         """
         B, N, d = context_x.shape
 
-        # Convert labels {0,1} → {-1,+1} and append as a final dimension
-        y_signal = 2 * context_y.float() - 1      # (B, N)
-        y_signal = y_signal.unsqueeze(-1)         # (B, N, 1)
+        # Labels {0,1} -> {-1,+1}
+        y_signal = 2 * context_y.float() - 1
+        y_signal = y_signal.unsqueeze(-1)  # (B, N, 1)
 
-        # Create (x_i, y_i) tokens for GPT-2
+        # Form (x_i, y_i) tokens
         context_tokens = torch.cat([context_x, y_signal], dim=-1)  # (B, N, d+1)
 
-        # Project down to d by linear layer if needed
-        if context_tokens.shape[-1] != self.d:
-            # Compress from (d+1) → d so that GPT-2 input shape is consistent
-            context_tokens = context_tokens[..., :self.d]
+        # Compress back to d
+        if context_tokens.shape[-1] != d:
+            context_tokens = context_tokens[..., :d]
 
-        # Append target token (y = 0 placeholder)
-        target_pad = torch.zeros(B, 1, d, device=context_x.device)
+        # Target token (no label)
         target_token = target_x.unsqueeze(1)  # (B, 1, d)
+
+        # Full sequence
         tokens = torch.cat([context_tokens, target_token], dim=1)  # (B, N+1, d)
 
-        # Encode with GPT-2
-        h = self._gpt2_encode(tokens)             # (B, N+1, H)
+        # Encode
+        h = self._llama_encode(tokens)  # (B, N+1, H)
 
-        # Use final token representation
-        final = h[:, -1, :]                       # (B, H)
-        logits = self.head(final).squeeze(-1)     # (B,)
+        # Use final token
+        final = h[:, -1, :]             # (B, H)
+        logits = self.head(final).squeeze(-1)
         return logits
 
-    # ----------------------------------------------------------------------
-    # Matches original API: forward(context_x, context_y, target_x)
-    # ----------------------------------------------------------------------
     def forward(self, context_x, context_y, target_x):
         return self._predict_single(context_x, context_y, target_x)
 
-    # ----------------------------------------------------------------------
-    # Matches original API: compute_in_context_preds(context_x, context_y)
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # In-context prediction for context tokens
+    # ------------------------------------------------------------------
     def compute_in_context_preds(self, context_x, context_y):
         """
         context_x: (B, N, d)
         context_y: (B, N)
-        returns: predicted labels for each context token: (B, N)
+        returns: (B, N)
         """
         B, N, d = context_x.shape
 
-        # Normalize as original model did
+        # Normalize as in original model
         context_x = context_x / torch.norm(context_x, dim=2, keepdim=True)
 
-        # Convert labels to {-1,+1}
-        y_signal = 2 * context_y.float() - 1      # (B, N)
-        y_signal = y_signal.unsqueeze(-1)         # (B, N, 1)
+        y_signal = 2 * context_y.float() - 1
+        y_signal = y_signal.unsqueeze(-1)
 
-        # Combine label + feature
         tokens = torch.cat([context_x, y_signal], dim=-1)  # (B, N, d+1)
+        if tokens.shape[-1] != d:
+            tokens = tokens[..., :d]
 
-        # Compress to size d
-        if tokens.shape[-1] != self.d:
-            tokens = tokens[..., :self.d]
-
-        # Encode whole context-only sequence (no target token)
-        h = self._gpt2_encode(tokens)             # (B, N, H)
-
-        # Predict label for each token independently
-        logits = self.head(h).squeeze(-1)         # (B, N)
-        preds = (logits > 0).float()              # (B, N)
+        h = self._llama_encode(tokens)   # (B, N, H)
+        logits = self.head(h).squeeze(-1)
+        preds = (logits > 0).float()
         return preds
 
 
@@ -164,7 +156,7 @@ class Trainer:
             self.setup_directories()
 
         # Initialize model and optimizer
-        self.model = GPT2Transformer(config.d).to(config.device)
+        self.model = LlamaTransformer(config.d).to(config.device)
         self.optimizer = optim.SGD(
             self.model.parameters(), 
             lr=config.learning_rate,
@@ -474,8 +466,8 @@ def run_parallel_cpu_experiments(num_processes: int = None):
     """
     # Create base results directory with timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    base_results_dir = f"gpt2_results_{timestamp}"
-    checkpoint_dir = "gpt2_checkpoints"
+    base_results_dir = f"llama_results_{timestamp}"
+    checkpoint_dir = "llama_checkpoints"
     os.makedirs(base_results_dir, exist_ok=True)
 
     # Create master results file with lock
@@ -539,8 +531,8 @@ if __name__ == "__main__":
     if torch.cuda.is_available() and not USE_CPU:
         print('Running sequential GPU experiments')
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        base_results_dir = f"gpt2_results_{timestamp}"
-        checkpoint_dir = "gpt2_checkpoints"
+        base_results_dir = f"llama_results_{timestamp}"
+        checkpoint_dir = "llama_checkpoints"
     
         # First get collection of varying-d, B fixed
         d_list = [10, 50, 100, 200, 400, 600, 800, 1000, 1250, 1500]
