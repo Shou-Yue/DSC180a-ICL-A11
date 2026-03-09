@@ -10,10 +10,13 @@ def data_gen(
     B: int,
     R: float,
     flip_prob: float = 0.0,
+    flip_context_prob: float | None = None,
+    flip_query_prob: float | None = None,
     device: str = "cpu",
     seed = None,
 ):
-
+    """Generate Gaussian mixture data. By default flip_prob applies to all labels.
+    For context-only noise (e.g. RQ2), set flip_context_prob=eps and flip_query_prob=0."""
     if seed is not None:
         #keep base & flip RNG different. the original paper did not do this which led to issues when running their code.
         g_base = torch.Generator(device="cpu").manual_seed(seed)
@@ -23,26 +26,36 @@ def data_gen(
         g_flip = None
 
     mu = torch.randn(B, d, generator=g_base)#(B, d)
-    mu = mu / mu.norm(dim=1, keepdim=True)  
-    mu = R * mu                              
+    mu = mu / mu.norm(dim=1, keepdim=True)
+    mu = R * mu
 
     labels = (torch.rand(B, N + 1, generator=g_base) > 0.5).float()#(B, N+1)
-    y_signal = 2 * labels - 1                                  
+    y_signal = 2 * labels - 1
 
     noise = torch.randn(B, N + 1, d, generator=g_base)#(B, N+1, d)
 
     x = (y_signal.unsqueeze(-1) * mu.unsqueeze(1) + noise)#(B, N+1, d)
 
-    #introduce noise to labels
-    if flip_prob > 0.0:
+    # introduce noise to labels
+    use_separate = flip_context_prob is not None or flip_query_prob is not None
+    if use_separate:
+        p_ctx = flip_context_prob if flip_context_prob is not None else 0.0
+        p_q = flip_query_prob if flip_query_prob is not None else 0.0
+        if p_ctx > 0:
+            flip_ctx = torch.rand(B, N, generator=g_flip) < p_ctx
+            labels[:, :N] = torch.where(flip_ctx, 1.0 - labels[:, :N], labels[:, :N])
+        if p_q > 0:
+            flip_tgt = torch.rand(B, generator=g_flip) < p_q
+            labels[:, -1] = torch.where(flip_tgt, 1.0 - labels[:, -1], labels[:, -1])
+    elif flip_prob > 0.0:
         flip_mask = torch.rand(B, N + 1, generator=g_flip) < flip_prob
         labels = torch.where(flip_mask, 1.0 - labels, labels)
 
     #output
-    x_context = (x[:, :N, :]).to(device)           
-    x_target = (x[:, -1, :]).to(device)           
-    y_context = (labels[:, :N]).to(device)         
-    y_target = (labels[:, -1]).to(device)        
+    x_context = (x[:, :N, :]).to(device)
+    x_target = (x[:, -1, :]).to(device)
+    y_context = (labels[:, :N]).to(device)
+    y_target = (labels[:, -1]).to(device)
 
     return (x_context, y_context, x_target, y_target)
 

@@ -9,7 +9,7 @@
   "flip_val": 0.0,
   "steps": 1000,
   "lr": 0.01,
-  "eval_every": 50,
+  "eval_every": 10,
   "log_every": 10,
   "device": "cpu",
   "seed": 0,

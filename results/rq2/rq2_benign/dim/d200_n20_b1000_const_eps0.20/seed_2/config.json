@@ -1,0 +1,21 @@
+{
+  "d": 200,
+  "n": 20,
+  "b": 1000,
+  "r_mode": "const",
+  "r_value": 6.45,
+  "r_resolved": 6.45,
+  "epsilon": 0.2,
+  "flip_train": 0.2,
+  "flip_val": 0.0,
+  "flip_context_train": 0.2,
+  "flip_query_train": 0.0,
+  "steps": 1000,
+  "lr": 0.01,
+  "eval_every": 50,
+  "log_every": 10,
+  "device": "cpu",
+  "seed": 2,
+  "exp_name": "rq2_benign",
+  "subdir": "dim"
+}

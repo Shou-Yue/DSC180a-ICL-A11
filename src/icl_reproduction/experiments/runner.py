@@ -23,6 +23,85 @@ def run_dir_name(d: int, n: int, b: int, r_mode: str) -> str:
     return f"d{d}_n{n}_b{b}_{r_mode}"
 
 
+def run_dir_name_rq2(d: int, n: int, b: int, r_mode: str, epsilon: float) -> str:
+    return f"d{d}_n{n}_b{b}_{r_mode}_eps{epsilon:.2f}"
+
+
+def run_one_rq2(
+    d: int,
+    n: int,
+    b: int,
+    r_mode: str,
+    r_value: float,
+    epsilon: float,
+    seed: int,
+    output_root: str,
+    exp_name: str,
+    subdir: str,
+    steps: int,
+    lr: float,
+    eval_every: int,
+    log_every: int,
+    device: str,
+) -> str:
+    """RQ2: context-only label noise (flip_context=epsilon, flip_query=0); validation always clean."""
+    set_seed(seed)
+    R = r_value if r_mode == "const" else r_value * (d ** 0.5)
+    base = os.path.join(output_root, "rq2", exp_name, subdir)
+    out_dir = os.path.join(base, run_dir_name_rq2(d, n, b, r_mode, epsilon), f"seed_{seed}")
+    os.makedirs(out_dir, exist_ok=True)
+    config = {
+        "d": d, "n": n, "b": b, "r_mode": r_mode, "r_value": r_value, "r_resolved": R,
+        "epsilon": epsilon,
+        "flip_train": epsilon,
+        "flip_val": 0.0,
+        "flip_context_train": epsilon,
+        "flip_query_train": 0.0,
+        "steps": steps, "lr": lr, "eval_every": eval_every, "log_every": log_every,
+        "device": device, "seed": seed, "exp_name": exp_name, "subdir": subdir,
+    }
+    with open(os.path.join(out_dir, "config.json"), "w") as f:
+        json.dump(config, f, indent=2)
+    model = LinearClassifier(d=d)
+    t0 = time.perf_counter()
+    metrics = train_model(
+        model, d=d, N=n, B=b, R_train=R, R_val=R,
+        flip_context_train=epsilon, flip_query_train=0.0,
+        flip_context_val=0.0, flip_query_val=0.0,
+        steps=steps, lr=lr, device=device, return_metrics=True,
+        eval_every=eval_every, log_every=log_every,
+        train_seed=seed, eval_seed=seed + 10000,
+        early_stop=True,
+    )
+    elapsed = time.perf_counter() - t0
+    val_accs = metrics["val_acc"]
+    ic_accs = metrics["ic_acc"]
+    best_val_acc = max(val_accs)
+    step_best = int(np.argmax(val_accs))
+    best_ic = max(ic_accs)
+    target_95 = 0.95 * best_val_acc
+    steps_to_95 = None
+    for s, acc in enumerate(val_accs):
+        if acc >= target_95:
+            steps_to_95 = s
+            break
+    summary = {
+        "best_val_acc": best_val_acc, "final_val_acc": val_accs[-1],
+        "best_in_context_acc": best_ic, "final_in_context_acc": ic_accs[-1],
+        "step_best_val_acc": step_best, "steps_to_95pct_best_val_acc": steps_to_95,
+        "elapsed_sec": round(elapsed, 2), **config,
+    }
+    with open(os.path.join(out_dir, "summary.json"), "w") as f:
+        json.dump(summary, f, indent=2)
+    with open(os.path.join(out_dir, "metrics.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["step", "train_loss", "val_loss", "train_acc", "val_acc", "in_context_acc"])
+        for step in range(len(metrics["train_loss"])):
+            w.writerow([step, metrics["train_loss"][step], metrics["val_loss"][step],
+                        metrics["train_acc"][step], metrics["val_acc"][step], metrics["ic_acc"][step]])
+    return out_dir
+
+
 def run_one(
     d: int,
     n: int,

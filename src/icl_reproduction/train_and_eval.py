@@ -6,12 +6,22 @@ from data import data_gen
 from model import LinearClassifier, MiniTransformer
 
 
-def evaluate(model, d, N, B_val, R_val, flip_val=0.0, device="cpu", seed=None):
+def evaluate(
+    model, d, N, B_val, R_val, flip_val=0.0,
+    flip_context_val=None, flip_query_val=None,
+    device="cpu", seed=None,
+):
+    """flip_context_val/flip_query_val override flip_val when set (for RQ2 context-only noise)."""
     model.eval()
+    use_separate = flip_context_val is not None or flip_query_val is not None
+    kwargs = dict(d=d, N=N, B=B_val, R=R_val, device=device, seed=seed)
+    if use_separate:
+        kwargs["flip_context_prob"] = flip_context_val if flip_context_val is not None else 0.0
+        kwargs["flip_query_prob"] = flip_query_val if flip_query_val is not None else 0.0
+    else:
+        kwargs["flip_prob"] = flip_val
     with torch.no_grad():
-        x_ctx, y_ctx, x_tgt, y_tgt = data_gen(
-            d, N, B_val, R_val, flip_prob=flip_val, device=device, seed=seed
-        )
+        x_ctx, y_ctx, x_tgt, y_tgt = data_gen(**kwargs)
         logits = model(x_ctx, y_ctx, x_tgt)
         val_loss = torch.nn.functional.binary_cross_entropy_with_logits(
             logits, y_tgt.float()
@@ -32,6 +42,10 @@ def train_model(
     R_val: float,
     flip_train: float = 0.0,
     flip_val: float = 0.0,
+    flip_context_train: float | None = None,
+    flip_query_train: float | None = None,
+    flip_context_val: float | None = None,
+    flip_query_val: float | None = None,
     steps: int = 300,
     lr: float = 1e-2,
     device: str = "cpu",
@@ -41,7 +55,12 @@ def train_model(
     train_seed=None,
     eval_seed=None,
     early_stop: bool = False,
+    early_stop_plateau_window: int = 50,
+    early_stop_plateau_min_steps: int = 500,
+    early_stop_plateau_tol: float = 0.01,
 ):
+    """For RQ2 context-only noise: set flip_context_train=eps, flip_query_train=0, flip_context_val=0, flip_query_val=0.
+    Early stop: max steps 1000; after early_stop_plateau_min_steps, stop if train/val/ic acc change < tol over last window steps."""
     model = model.to(device)
     optim = torch.optim.SGD(model.parameters(), lr=lr)
     metrics = {
@@ -51,14 +70,17 @@ def train_model(
         "train_loss": [],
         "val_loss": [],
     }
+    use_separate_train = flip_context_train is not None or flip_query_train is not None
+    use_separate_val = flip_context_val is not None or flip_query_val is not None
     last_val_loss, last_val_acc, last_ctx_acc = None, None, None
     for step in range(steps):
-        x_ctx, y_ctx, x_tgt, y_tgt = data_gen(
-            d, N, B, R_train,
-            flip_prob=flip_train,
-            device=device,
-            seed=train_seed + step if train_seed is not None else None,
-        )
+        train_kw = dict(d=d, N=N, B=B, R=R_train, device=device, seed=train_seed + step if train_seed is not None else None)
+        if use_separate_train:
+            train_kw["flip_context_prob"] = flip_context_train if flip_context_train is not None else 0.0
+            train_kw["flip_query_prob"] = flip_query_train if flip_query_train is not None else 0.0
+        else:
+            train_kw["flip_prob"] = flip_train
+        x_ctx, y_ctx, x_tgt, y_tgt = data_gen(**train_kw)
         logits = model(x_ctx, y_ctx, x_tgt)
         loss = torch.nn.functional.binary_cross_entropy_with_logits(
             logits, y_tgt.float()
@@ -67,20 +89,18 @@ def train_model(
         loss.backward()
         optim.step()
         train_acc = ((logits > 0).float() == y_tgt).float().mean().item()
+        eval_kw = dict(model=model, d=d, N=N, B_val=B, R_val=R_val, device=device,
+                       seed=eval_seed + step if eval_seed is not None else None)
+        if use_separate_val:
+            eval_kw["flip_context_val"] = flip_context_val if flip_context_val is not None else 0.0
+            eval_kw["flip_query_val"] = flip_query_val if flip_query_val is not None else 0.0
+        else:
+            eval_kw["flip_val"] = flip_val
         if step % eval_every == 0:
-            last_val_loss, last_val_acc, last_ctx_acc = evaluate(
-                model, d, N, B, R_val,
-                flip_val=flip_val,
-                device=device,
-                seed=eval_seed + step if eval_seed is not None else None,
-            )
+            last_val_loss, last_val_acc, last_ctx_acc = evaluate(**eval_kw)
         if last_val_loss is None:
-            last_val_loss, last_val_acc, last_ctx_acc = evaluate(
-                model, d, N, B, R_val,
-                flip_val=flip_val,
-                device=device,
-                seed=eval_seed if eval_seed is not None else None,
-            )
+            eval_kw["seed"] = eval_seed if eval_seed is not None else None
+            last_val_loss, last_val_acc, last_ctx_acc = evaluate(**eval_kw)
         metrics["train_loss"].append(loss.item())
         metrics["train_acc"].append(train_acc)
         metrics["val_loss"].append(last_val_loss)
@@ -95,6 +115,17 @@ def train_model(
             )
         if early_stop and step >= 50 and train_acc >= 0.999 and last_val_acc >= 0.999:
             break
+        # Plateau early stop: after min_steps (e.g. 500), stop if no significant change in accuracies over last window
+        if early_stop and step >= early_stop_plateau_min_steps:
+            k = early_stop_plateau_window
+            if len(metrics["train_acc"]) >= k:
+                ta = metrics["train_acc"][-k:]
+                va = metrics["val_acc"][-k:]
+                ia = metrics["ic_acc"][-k:]
+                if (max(ta) - min(ta) <= early_stop_plateau_tol and
+                    max(va) - min(va) <= early_stop_plateau_tol and
+                    max(ia) - min(ia) <= early_stop_plateau_tol):
+                    break
     if return_metrics:
         return metrics
     return model

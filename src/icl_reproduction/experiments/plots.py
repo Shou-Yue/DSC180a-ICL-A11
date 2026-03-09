@@ -7,8 +7,14 @@ import pandas as pd
 import numpy as np
 
 
-def _scan_run_dirs(results_root: str, exp_name: str, subdir: Optional[str] = None) -> List[str]:
-    base = os.path.join(results_root, "rq1", exp_name)
+def _scan_run_dirs(
+    results_root: str,
+    exp_name: str,
+    subdir: Optional[str] = None,
+    rq_subdir: str = "rq1",
+) -> List[str]:
+    """Scan for seed_* dirs containing summary.json. rq_subdir is 'rq1' or 'rq2'."""
+    base = os.path.join(results_root, rq_subdir, exp_name)
     if subdir:
         base = os.path.join(base, subdir)
     if not os.path.isdir(base):
@@ -191,6 +197,8 @@ def plot_learning_curves(runs_df: pd.DataFrame, d0: int, n0: int, b0: int, d_val
             if "step" not in df.columns:
                 continue
             fig, ax = plt.subplots(figsize=(6, 4))
+            if "train_acc" in df.columns:
+                ax.plot(df["step"], df["train_acc"], label="Train acc")
             ax.plot(df["step"], df["val_acc"], label="Val acc")
             ax.plot(df["step"], df["in_context_acc"], label="In-context acc")
             ax.set_xlabel("Step")
@@ -212,14 +220,15 @@ def generate_all_plots(
     b_vals: List[int],
     plots_dir: Optional[str] = None,
     subdir: Optional[str] = None,
+    rq_subdir: str = "rq1",
 ) -> None:
-    base = os.path.join(results_root, "rq1", exp_name)
+    base = os.path.join(results_root, rq_subdir, exp_name)
     if subdir:
         base = os.path.join(base, subdir)
     if plots_dir is None:
         plots_dir = os.path.join(base, "_plots")
     os.makedirs(plots_dir, exist_ok=True)
-    run_dirs = _scan_run_dirs(results_root, exp_name, subdir)
+    run_dirs = _scan_run_dirs(results_root, exp_name, subdir, rq_subdir=rq_subdir)
     runs_df = _runs_df(run_dirs)
     if runs_df.empty:
         return
