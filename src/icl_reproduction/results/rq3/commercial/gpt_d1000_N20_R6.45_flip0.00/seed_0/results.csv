@@ -1,0 +1,11 @@
+task_idx,prediction,true_label,correct,error
+0,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 161769, Requested 44966. Please try again in 2.02s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+1,1,0,0,
+2,1,1,1,
+3,0,0,1,
+4,0,0,1,
+5,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 200000, Requested 45016. Please try again in 13.504s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+6,0,0,1,
+7,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 200000, Requested 44998. Please try again in 13.499s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+8,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 166457, Requested 44950. Please try again in 3.422s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+9,1,0,0,

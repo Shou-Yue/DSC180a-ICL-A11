@@ -1,0 +1,431 @@
+\documentclass[article,36pt,extrafontsizes,oneside,openany,oldfontcommands]{memoir}
+\usepackage{graphicx}
+    \graphicspath{{figure/}}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{bm}
+\RequirePackage{lipsum}
+\RequirePackage{blindtext}
+\RequirePackage[svgnames,table]{xcolor}
+\RequirePackage{tikz}
+\RequirePackage[framemethod=tikz]{mdframed}
+\RequirePackage{color}
+\RequirePackage{geometry}
+\RequirePackage{adjmulticol}
+\RequirePackage[skins,most,listings,skins]{tcolorbox}
+
+%For table formatting
+\RequirePackage{longtable}
+\RequirePackage{array}
+\RequirePackage{multirow}
+\RequirePackage{wrapfig}
+\RequirePackage{float}
+\RequirePackage{colortbl}
+\RequirePackage{pdflscape}
+\RequirePackage{pagecolor}
+\RequirePackage{tabu}
+\RequirePackage{threeparttablex}
+\RequirePackage[normalem]{ulem}
+\RequirePackage{makecell}
+\usepackage{xmpmulti, booktabs, multicol}
+\usepackage{threeparttable}
+\usepackage{dcolumn}
+\newcolumntype{.}[1]{D{.}{.}{#1}}
+\newcolumntype{,}[1]{D{,}{,}{#1}}
+\usepackage{siunitx}
+\sisetup{%
+  mode = math,
+  detect-all,  
+  output-decimal-marker = {.},
+  group-separator = {,},
+  math-rm = \rmnumeric,
+  text-rm = \rmnumeric,
+}
+
+% Color definitions
+\usepackage{color}
+    \definecolor{MyBrown}{HTML}{3D3D00}
+    \definecolor{MyBlue}{HTML}{003A75}  
+    \definecolor{MyRed}{HTML}{6F1A2F}
+    \definecolor{MyGreen}{HTML}{004847}
+\usepackage{hyperref}
+    \hypersetup{bookmarks = true,
+                bookmarksnumbered = true,
+                colorlinks = true,
+                linkcolor = MyRed,
+                citecolor = MyBlue,
+                filecolor = MyBrown,
+                urlcolor = MyGreen}
+
+\RequirePackage{float}
+\floatplacement{figure}{H}
+\floatplacement{table}{H}
+
+%%%%%%%%% COLOURS %%%%%%%%
+\definecolor{titleboxbgcol}{HTML}{D8E0FF}
+\definecolor{titleboxbordercol}{HTML}{205DA4}
+\definecolor{columnlinecol}{HTML}{008080}
+\definecolor{bodybgcol}{HTML}{ffffff}
+\definecolor{sectitlebgcol}{HTML}{D8E0FF}
+\definecolor{sectitlebordercol}{HTML}{D8E0FF}
+% Text Colours
+\definecolor{titletextcol}{HTML}{1c518f}
+\definecolor{authortextcol}{HTML}{000000}
+\definecolor{affiliationtextcol}{HTML}{000000}
+\definecolor{sectitletextcol}{HTML}{1c518f}
+\definecolor{bodytextcol}{HTML}{000000}
+\definecolor{footnotetextcol}{HTML}{000000}
+\definecolor{citecol}{HTML}{CC0000}
+\definecolor{urlcol}{HTML}{008080}
+\definecolor{linkcol}{HTML}{008080}
+
+%Memoir spacing options
+%spacing between figure/table and caption
+\setlength{\abovecaptionskip}{0.4in}
+\setlength{\belowcaptionskip}{0.2in}
+\captionnamefont{\large}
+\captiontitlefont{\large}
+
+%define column options
+\setlength{\columnseprule}{0pt}
+\def\columnseprulecolor{\color{columnlinecol}}
+
+%define section title features
+\setsubsubsecheadstyle{\small\color{sectitletextcol}\textbf}
+\setsecnumformat{}
+\def\sectionmark#1{\markboth{#1}{#1}}
+
+%%%%%%%%%%%% TCOLORBOXES %%%%%%%%%%%%%%%%%%%%
+%Title Box
+\newtcolorbox{topbox}{
+enhanced,
+colback=titleboxbgcol,
+colframe=titleboxbordercol,
+halign=center,
+boxrule=0cm,
+sharp corners=all,
+}
+
+%Body Section Title Box
+\newtcolorbox{myboxstuff}[1][]{
+code={\parindent=0em},
+colframe=sectitlebordercol,
+nobeforeafter,
+left skip=0pt,
+valign=center,
+halign=center,
+fontupper=\Large\bfseries,
+colupper=sectitletextcol,
+boxrule=2mm,
+colback=sectitlebgcol,
+sharp corners=south, #1}
+\newcommand{\mybox}[1]{%
+\begin{myboxstuff}
+\strut #1
+\end{myboxstuff}%
+}
+\makeheadstyles{MyBox}{
+    \setsecheadstyle{\mybox}
+}
+\headstyles{MyBox}\makepagestyle{MyBox}
+
+\thispagestyle{empty}
+
+%Remove section numbering
+\counterwithout{section}{chapter}
+\makechapterstyle{mydefault}{
+\addtocounter{secnumdepth}{2}
+\setsecheadstyle{\mybox}
+\setsubsecheadstyle{\itshape}
+\setsubsubsecheadstyle{\itshape}
+}
+
+%set the chapterstyle
+\chapterstyle{mydefault}
+
+%define column spacing
+\setlength\columnsep{0.5in}
+
+%spacing params
+\setlength\parindent{0em}
+\setlength\parskip{0em}
+\setlength\hangparas{0em}
+
+%spacing after section head title
+\setaftersecskip{0em}
+\setbeforesecskip{1.5em}
+\setlength\textfloatsep{0in}
+\setlength\floatsep{0.1in}
+\setlength\intextsep{0.5in}
+\makeatletter
+\g@addto@macro{\normalsize}{%
+    } 
+\makeatother
+
+\setstocksize{36in}{48in}
+\settrimmedsize{\stockheight}{\stockwidth}{*}
+\settypeblocksize{36in}{48in}{*}
+\setlrmargins{*}{*}{1}
+\setulmarginsandblock{2.5cm}{0cm}{*}
+\setmarginnotes{0em}{0cm}{0cm}
+\setlength{\footskip}{0cm}
+\setlength{\footnotesep}{0cm}
+\setlength{\headheight}{0pt}
+\setlength{\headsep}{0pt}
+\setlength{\trimtop}{0pt}
+\setlength{\trimedge}{0pt}
+\setlength{\uppermargin}{0pt}
+\checkandfixthelayout
+\usepackage{enumitem}
+\usepackage{bbm}
+\usepackage{dsfont}
+\def\one{\mathrm{1}\hspace{-12pt}\mathrm{1}}
+\setlist[enumerate]{topsep=0pt,itemsep=-1ex,partopsep=1ex,parsep=1ex,leftmargin=2ex}
+\setlist[itemize]{topsep=0pt,itemsep=-1ex,partopsep=1ex,parsep=1ex,leftmargin=2ex}
+
+%Footnote styling
+\RequirePackage{footmisc}
+\def\footnotelayout{\centering\color{footnotetextcol}}
+
+% Code highlighting for markdown
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+
+% Suppress warnings about fonts
+\usepackage{fancyhdr}
+
+% Font family - using standard LaTeX fonts
+\renewcommand{\familydefault}{\rmdefault}  % Use serif (Roman) font
+
+% define the BODYBGCOL
+\newpagecolor{bodybgcol}
+
+%sets footnote styling
+\renewcommand\footnoterule{}
+
+%-------------- Begin Document -------------------%
+\begin{document}
+
+%-------------- Title Box Start ------------------%
+\begin{topbox}
+  \color{titletextcol}
+  \vspace{1.2in}
+  \bfseries
+  \fontsize{115pt}{115pt}\selectfont
+  {Evaluating In-Context Learning Capabilities of Transformers on Binary Classification}\\[0.75in]
+  \color{authortextcol} 
+  \mdseries
+  \LARGE{Rushil Patel, Banga Bansal $\cdot$ UC San Diego $\cdot$ DSC 180 $\cdot$ Spring 2025} 
+  \vspace{0.75in}
+\end{topbox}
+
+%--------------- Title Box End -------------------%
+%----------------- Body Start --------------------%
+
+\fontsize{45pt}{55pt}\selectfont
+
+\begin{adjmulticols*}{3}{0.5in}{0.5in}
+\color{bodytextcol}
+
+\section{Research Overview}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+In-context learning (ICL) enables large language models and transformers to perform novel tasks by inferring patterns from in-context examples without parameter updates. This project investigates ICL performance on synthetic binary classification tasks from Gaussian mixtures, addressing three key research questions:
+
+\vspace{0.2in}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item \textbf{RQ1:} How does in-context test accuracy scale with dimension $d$, batch size $B$, and sequence length $N$?
+
+\item \textbf{RQ2:} Under what conditions does the model exhibit \emph{benign overfitting}, memorizing noisy labels while maintaining high test accuracy?
+
+\item \textbf{RQ3:} Are phenomena from linear attention transformers preserved with full transformer architectures (encoder-only, decoder-only)?
+\end{itemize}
+
+\end{adjustwidth}
+
+\section{Data Generation: Gaussian Mixture Model}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+For each classification task $\tau$, we generate data as follows:
+
+\vspace{0.1in}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Sample a task-specific mean: $\mu_\tau \sim \text{Unif}(R \cdot S^{d-1})$
+\item Sample labels: $y_{\tau,i} \in \{-1, +1\}$ uniformly
+\item Sample noise: $z_{\tau,i} \sim \mathcal{N}(0, I_d)$
+\item Form input: $x_{\tau,i} = y_{\tau,i} \mu_\tau + z_{\tau,i}$
+\end{itemize}
+
+\vspace{0.15in}
+Each task consists of:
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item $N$ in-context labeled examples $(x_1, y_1), \ldots, (x_N, y_N)$
+\item Signal strength controlled by $R$ (class separability)
+\item Label noise via probability $p$ of flipping
+\end{itemize}
+
+\end{adjustwidth}
+
+\columnbreak
+
+\section{In-Context Learning Mechanism}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+The model receives a sequence of labeled examples and must predict:
+$$\hat{y}_{N+1} = \text{sign}(\text{model}(\{(x_i, y_i)\}_{i=1}^{N}, x_{N+1}))$$
+
+\vspace{0.2in}
+\textbf{Linear Transformer:} One-layer linear attention model with:
+\begin{align*}
+W &: \text{learnable weight matrix} \\
+\text{Prediction} &= \text{sign}\left(x_{N+1}^T W \frac{\sum_i y_i x_i}{\sum_i y_i^2}\right)
+\end{align*}
+
+\vspace{0.2in}
+\textbf{Benign Overfitting:} Occurs when the model:
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Memorizes noisy in-context labels (high training accuracy)
+\item Yet generalizes well to clean test data (high test accuracy)
+\end{itemize}
+
+This paradoxical behavior mirrors modern large language models.
+
+\end{adjustwidth}
+
+\section{RQ1: Scaling with Dimension, Batch Size, and Sequence Length}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+\textbf{Experimental Setup:}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Vary dimension: $d \in \{10, 50, 100, 500, 1000\}$
+\item Vary sequence length: $N \in \{5, 10, 20, 40, 80\}$
+\item Vary batch size: $B \in \{50, 100, 250, 500, 1000, 2000\}$
+\item Signal strength: $R = \sqrt{d}^{\alpha}$ for various $\alpha$
+\end{itemize}
+
+\vspace{0.15in}
+\textbf{Expected Phenomena:}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Accuracy improves with sequence length $N$ (more examples)
+\item Accuracy depends on $R/\sqrt{d}$ (signal-to-noise ratio)
+\item Double descent behavior in scaling regime
+\end{itemize}
+
+\textbf{Results location:} \texttt{results/rq1/rq1\_linear\_scaling/}
+
+\end{adjustwidth}
+
+\columnbreak
+
+\begin{minipage}{.65\linewidth}
+
+\section{RQ2: Benign Overfitting Phenomenon}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+\textbf{Key Investigation:} Does the model memorize noisy labels while generalizing?
+
+\vspace{0.15in}
+We measure accuracy on:
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item \textbf{Training (noisy):} Accuracy on flipped labels ($p \in \{0, 0.2, 0.4\}$)
+\item \textbf{Test (clean):} Accuracy on unseen clean data
+\end{itemize}
+
+\vspace{0.15in}
+\textbf{Hypothesis:} In high-dimension, low-noise regime:
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Training accuracy may approach or reach 100\% even with noise
+\item Test accuracy remains close to 50\% + margin from signal
+\end{itemize}
+
+This suggests the model learns task-invariant structure despite noise.
+
+\vspace{0.15in}
+\textbf{Evaluation Metrics:}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Train-test gap as function of label flip probability
+\item Phase transitions in accuracy curves
+\end{itemize}
+
+\end{adjustwidth}
+
+\end{minipage}
+
+\section{RQ3: Full Transformer Architectures}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+\textbf{Extensions Beyond Linear Attention:}
+
+\vspace{0.15in}
+We test whether ICL phenomena generalize to:
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item \textbf{Decoder-only:} Standard GPT-like architecture
+\item \textbf{Encoder-only:} BERT-like architecture  
+\item \textbf{Hybrid:} Encoder-decoder similar to T5
+\end{itemize}
+
+\vspace{0.15in}
+\textbf{Comparisons:}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item How does attention (multi-head vs.\ single) affect ICL?
+\item Role of positional encodings in in-context learning
+\item Computational efficiency trade-offs
+\end{itemize}
+
+\textbf{Commercial LLM Evaluation:} We also evaluate Gemini, Claude, and GPT on the same tasks via API to understand how real LLMs perform on synthetic ICL tasks.
+
+\end{adjustwidth}
+
+\section{Methodology}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+\textbf{Training Setup:}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Optimizer: AdamW with learning rate $5 \times 10^{-4}$
+\item Loss: Binary cross-entropy
+\item Training steps: 300 per task
+\item Validation: Separate clean validation set
+\end{itemize}
+
+\vspace{0.15in}
+\textbf{Evaluation:}
+\begin{itemize}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Accuracy metric: Percentage of correct predictions
+\item Multiple seeds for reproducibility
+\item Aggregated results by configuration
+\end{itemize}
+
+\textbf{Implementation:} Python with PyTorch and Transformers library. Models trained on CPU and GPU. Results saved as JSONL for analysis and visualization.
+
+\end{adjustwidth}
+
+\vspace{1.5in}
+
+\section{Expected Contributions}
+
+\begin{adjustwidth}{0.1in}{0.1in}
+\begin{enumerate}[topsep=0pt,itemsep=0ex,partopsep=1ex,parsep=1ex]
+\item Comprehensive scaling laws for ICL with transformers
+\item Empirical characterization of benign overfitting phenomenon
+\item Comparison of architectures for in-context learning
+\item Evaluation of commercial LLMs on controlled ICL tasks
+\item Open-source codebase for reproducing results
+\end{enumerate}
+\end{adjustwidth}
+
+% \bibliographystyle{bib/econ_aer}
+% \bibliography{bib/All_Papers}
+
+\end{adjmulticols*}
+%------------------ Body End ---------------------%
+
+\end{document}

@@ -1,0 +1,11 @@
+task_idx,prediction,true_label,correct,error
+0,0,0,1,
+1,0,0,1,
+2,-1,0,0,Could not parse response: Looking at the labeled examples
+3,-1,1,0,Could not parse response: Looking at the labeled examples
+4,-1,1,0,Could not parse response: Looking at the labeled examples
+5,-1,0,0,Could not parse response: Looking at the labeled examples
+6,0,0,1,
+7,-1,1,0,Could not parse response: Looking at the labeled examples
+8,-1,1,0,Could not parse response: Looking at the labeled examples
+9,1,1,1,

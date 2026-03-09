@@ -1,0 +1,10 @@
+{
+  "mode": "commercial",
+  "d": 50,
+  "N": 20,
+  "R": 0.3,
+  "provider": "gpt",
+  "seed": 2,
+  "flip_prob": 0.0,
+  "num_tasks": 10
+}

@@ -1,25 +1,29 @@
 import streamlit as st
 import os
 import sys
-import torch
-import google.generativeai as genai
-from dotenv import load_dotenv
-import subprocess
 import json
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
-from llm_providers import get_provider
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../icl_reproduction'))
-from training import BinaryClassificationDataset
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+_src = os.path.dirname(_script_dir)
+_root = os.path.dirname(_src)
+sys.path.insert(0, _src)
+sys.path.insert(0, _root)
 
-# 1. Load Environment Variables
-load_dotenv()
-api_key = os.getenv("GEMINI_API_KEY")
+from dataset import BinaryClassificationDataset
+from llm_providers import get_provider
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv optional
 
 # 2. Configure Page Layout
 st.set_page_config(page_title="Binary Classification Task Solver", layout="wide")
@@ -87,98 +91,93 @@ with st.sidebar:
     tab = st.radio("Select Mode", ["Single Test", "Batch Testing", "Results Dashboard"])
 
 # --- HELPER FUNCTIONS ---
-def format_dataset_for_prompt(context_x, context_y, query_x):
-    """Format the dataset as a readable string for Gemini"""
-    B, d = context_x.shape
-    
-    # Format context examples
-    dataset_str = "Labeled Context Examples:\n"
-    for i in range(B):
-        features = [f"{context_x[i, j].item():.4f}" for j in range(d)]
-        label = int(context_y[i].item())
-        dataset_str += f"Example {i+1}: Features = [{', '.join(features)}], Label = {label}\n"
-    
-    # Format query point
-    dataset_str += "\nQuery Point (unlabeled):\n"
-    query_features = [f"{query_x[j].item():.4f}" for j in range(d)]
-    dataset_str += f"Features = [{', '.join(query_features)}]\n"
-    
-    return dataset_str
 
-def predict_on_dataset(dataset_str, provider_name="gemini"):
+def get_api_key(provider_name: str) -> str:
+    """Get API key for provider from environment"""
+    key_names = {
+        'gemini': 'GEMINI_API_KEY',
+        'claude': 'CLAUDE_API_KEY',
+        'gpt': 'GPT_API_KEY'
+    }
+    return os.getenv(key_names.get(provider_name, f"{provider_name.upper()}_API_KEY"), "")
+
+def predict_on_dataset(dataset_str: str, provider_name: str = "gemini") -> str:
     """Send dataset to LLM and get prediction for query point"""
     
-    prompt = f"""
-    You are a binary classification model performing in-context learning.
+    system_prompt = """You are a binary classification model performing in-context learning.
+
+You will be given a dataset with labeled examples followed by a single unlabeled datapoint.
+Your task is to learn from the labeled examples and make a prediction on the query point.
+
+INSTRUCTIONS:
+1. Use the labeled examples to infer the classification pattern.
+2. Apply this pattern to predict the label of the query point.
+3. Output ONLY the predicted label (0 or 1).
+4. Do not include any explanation, reasoning, or additional text.
+5. Your response should be a single value: either 0 or 1.
+"""
     
-    You will be given a dataset with labeled examples followed by a single unlabeled datapoint.
-    Your task is to learn from the labeled examples and make a prediction on the query point.
-    
-    DATASET:
-    {dataset_str}
-    
-    INSTRUCTIONS:
-    1. Use the labeled examples to infer the classification pattern.
-    2. Apply this pattern to predict the label of the query point.
-    3. Output ONLY the predicted label (0 or 1).
-    4. Do not include any explanation, reasoning, or additional text.
-    5. Your response should be a single value: either 0 or 1.
-    
-    PREDICTION:
-    """
+    prompt = system_prompt + "\nDATASET:\n" + dataset_str + "\nPREDICTION:"
     
     try:
-        api_key = os.getenv(f"{provider_name.upper()}_API_KEY")
+        api_key = get_api_key(provider_name)
         if not api_key:
-            raise ValueError(f"API key for {provider_name} not found in .env")
+            raise ValueError(f"API key for {provider_name} not found")
         
         provider = get_provider(provider_name, api_key)
-        print(f"Consulting {provider_name.upper()} for prediction...")
         return provider.predict(prompt)
     except Exception as e:
-        print(f"Error with {provider_name}: {str(e)}")
         raise
 
-def run_single_test(d, N, R, flip_prob, provider_name="gemini"):
-    """Run a single test and return result"""
+
+def run_single_test(d: int, N: int, R: float, flip_prob: float, provider_name: str = "gemini") -> dict:
+    """Run a single classification test and return result"""
     try:
+        # Generate dataset
         dataset = BinaryClassificationDataset(d=d, N=N, num_tasks=1, R=R, flip_prob=flip_prob)
-        task = dataset[0]
+        task = dataset.get_task_dict(task_idx=0)
         
-        context_x = task['context_x']
-        context_y = task['context_y']
-        query_x = task['query_x']
         query_y = task['query_y']
+        formatted_prompt = task['formatted_prompt']
         
-        dataset_str = format_dataset_for_prompt(context_x, context_y, query_x)
-        prediction = predict_on_dataset(dataset_str, provider_name=provider_name)
+        # Get prediction
+        prediction_text = predict_on_dataset(formatted_prompt, provider_name=provider_name)
         
         true_label = int(query_y.item())
-        if prediction in ['0', '1']:
-            pred_label = int(prediction)
-            is_correct = pred_label == true_label
-            save_result(d, N, R, flip_prob, pred_label, true_label, is_correct, accuracy_type=provider_name)
-            return {
-                "d": d,
-                "N": N,
-                "R": R,
-                "flip_prob": flip_prob,
-                "prediction": pred_label,
-                "true_label": true_label,
-                "correct": is_correct,
-                "provider": provider_name,
-                "status": "success"
-            }
-        else:
+        
+        # Parse prediction - look for 0 or 1
+        prediction = None
+        for char in prediction_text.replace('\n', ' '):
+            if char == '0':
+                prediction = 0
+                break
+            elif char == '1':
+                prediction = 1
+                break
+        
+        if prediction is None:
             return {
                 "d": d,
                 "N": N,
                 "R": R,
                 "flip_prob": flip_prob,
                 "status": "invalid_prediction",
-                "prediction": prediction,
+                "prediction": prediction_text[:20],
                 "provider": provider_name
             }
+        
+        is_correct = prediction == true_label
+        return {
+            "d": d,
+            "N": N,
+            "R": R,
+            "flip_prob": flip_prob,
+            "prediction": prediction,
+            "true_label": true_label,
+            "correct": int(is_correct),
+            "provider": provider_name,
+            "status": "success"
+        }
     except Exception as e:
         return {
             "d": d,
@@ -187,6 +186,8 @@ def run_single_test(d, N, R, flip_prob, provider_name="gemini"):
             "flip_prob": flip_prob,
             "status": "error",
             "error": str(e),
+            "provider": provider_name
+        }
             "provider": provider_name
         }
 

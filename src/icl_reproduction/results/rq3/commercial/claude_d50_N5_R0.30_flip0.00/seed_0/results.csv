@@ -1,0 +1,11 @@
+task_idx,prediction,true_label,correct,error
+0,0,0,1,
+1,1,0,0,
+2,-1,0,0,Could not parse response: Looking at the labeled examples
+3,0,1,0,
+4,0,1,0,
+5,-1,-1,0,"Error code: 500 - {'type': 'error', 'error': {'type': 'api_error', 'message': 'Internal server error'}, 'request_id': 'req_011CYoqqYT37SH24MNE56UJt'}"
+6,-1,-1,0,"Error code: 500 - {'type': 'error', 'error': {'type': 'api_error', 'message': 'Internal server error'}, 'request_id': 'req_011CYoqr3MbNZbBfJsiX1iWD'}"
+7,-1,-1,0,"Error code: 500 - {'type': 'error', 'error': {'type': 'api_error', 'message': 'Internal server error'}, 'request_id': 'req_011CYoqrWi8uivJ2o1WVJBt8'}"
+8,-1,1,0,Could not parse response: Looking at the labeled examples
+9,-1,1,0,Could not parse response: Looking at the labeled examples

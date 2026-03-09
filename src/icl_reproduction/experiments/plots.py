@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 
 def _scan_run_dirs(results_root: str, exp_name: str, subdir: Optional[str] = None) -> List[str]:
@@ -231,3 +232,259 @@ def generate_all_plots(
         plot_heatmap_d_n(runs_df, r_mode, b0, os.path.join(plots_dir, f"heatmap_d_n_{r_mode}.png"))
         plot_heatmap_b_n(runs_df, r_mode, d0, os.path.join(plots_dir, f"heatmap_b_n_{r_mode}.png"))
     plot_learning_curves(runs_df, d0, n0, b0, d_vals, n_vals, b_vals, plots_dir)
+
+
+# ============================================================================
+# RQ3: Full Transformer Evaluation - Plotting Functions
+# ============================================================================
+
+def _scan_rq3_commercial_dirs(results_root: str) -> List[str]:
+    """Scan for RQ3 commercial LLM experiment directories"""
+    base = os.path.join(results_root, "rq3", "commercial")
+    if not os.path.isdir(base):
+        return []
+    dirs = []
+    for provider_config in os.listdir(base):
+        path = os.path.join(base, provider_config)
+        if not os.path.isdir(path):
+            continue
+        for item in os.listdir(path):
+            seed_path = os.path.join(path, item)
+            if os.path.isdir(seed_path) and item.startswith("seed_"):
+                if os.path.isfile(os.path.join(seed_path, "summary.json")):
+                    dirs.append(seed_path)
+    return dirs
+
+
+def _scan_rq3_regression_dirs(results_root: str) -> List[str]:
+    """Scan for RQ3 regression experiment directories"""
+    base = os.path.join(results_root, "rq3", "regression")
+    if not os.path.isdir(base):
+        return []
+    dirs = []
+    for config in os.listdir(base):
+        path = os.path.join(base, config)
+        if not os.path.isdir(path):
+            continue
+        for item in os.listdir(path):
+            seed_path = os.path.join(path, item)
+            if os.path.isdir(seed_path) and item.startswith("seed_"):
+                if os.path.isfile(os.path.join(seed_path, "summary.json")):
+                    dirs.append(seed_path)
+    return dirs
+
+
+def plot_rq3_provider_comparison_heatmap(
+    results_root: str,
+    output_file: str = "rq3_provider_heatmap.png"
+) -> None:
+    """
+    Plot accuracy heatmap (d × N) for each commercial LLM provider.
+    
+    Creates a 3-panel figure with Gemini, Claude, GPT accuracy heatmaps side-by-side.
+    """
+    run_dirs = _scan_rq3_commercial_dirs(results_root)
+    if not run_dirs:
+        print("⚠️  No RQ3 commercial results found")
+        return
+    
+    # Load all results
+    rows = []
+    for d in run_dirs:
+        summary_file = os.path.join(d, "summary.json")
+        if os.path.isfile(summary_file):
+            with open(summary_file) as f:
+                summary = json.load(f)
+                summary["_dir"] = d
+                rows.append(summary)
+    
+    if not rows:
+        print("⚠️  No summaries found")
+        return
+    
+    df = pd.DataFrame(rows)
+    
+    # Create heatmaps for each provider
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    providers = ['gemini', 'claude', 'gpt']
+    
+    for idx, provider_name in enumerate(providers):
+        provider_df = df[df['provider'] == provider_name]
+        
+        if provider_df.empty:
+            axes[idx].text(0.5, 0.5, f'No {provider_name.upper()} results', 
+                          ha='center', va='center', fontsize=12)
+            axes[idx].set_title(f"{provider_name.upper()}")
+            continue
+        
+        # Pivot to create heatmap
+        pivot = provider_df.pivot_table(
+            values='accuracy',
+            index='d',
+            columns='N',
+            aggfunc='mean'
+        )
+        
+        im = axes[idx].imshow(pivot, cmap='RdYlGn', vmin=0, vmax=1, aspect='auto')
+        axes[idx].set_title(f"{provider_name.upper()}")
+        axes[idx].set_xlabel("Context Length (N)")
+        axes[idx].set_ylabel("Dimension (d)")
+        axes[idx].set_xticks(range(len(pivot.columns)))
+        axes[idx].set_xticklabels(pivot.columns)
+        axes[idx].set_yticks(range(len(pivot.index)))
+        axes[idx].set_yticklabels(pivot.index)
+        
+        # Add text annotations
+        for i in range(len(pivot.index)):
+            for j in range(len(pivot.columns)):
+                val = pivot.iloc[i, j]
+                if not np.isnan(val):
+                    axes[idx].text(j, i, f"{val:.2f}", ha="center", va="center", color="black", fontsize=9)
+    
+    plt.colorbar(im, ax=axes[-1], label="Accuracy")
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
+    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Saved provider heatmap to {output_file}")
+
+
+def plot_rq3_accuracy_vs_r(
+    results_root: str,
+    output_file: str = "rq3_accuracy_vs_r.png"
+) -> None:
+    """
+    Plot accuracy vs signal strength (R) for each provider with error bands.
+    """
+    run_dirs = _scan_rq3_commercial_dirs(results_root)
+    if not run_dirs:
+        print("⚠️  No RQ3 commercial results found")
+        return
+    
+    rows = []
+    for d in run_dirs:
+        summary_file = os.path.join(d, "summary.json")
+        if os.path.isfile(summary_file):
+            with open(summary_file) as f:
+                summary = json.load(f)
+                rows.append(summary)
+    
+    df = pd.DataFrame(rows)
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    providers = ['gemini', 'claude', 'gpt']
+    colors = {'gemini': '#4285F4', 'claude': '#000000', 'gpt': '#10A37F'}
+    
+    for provider_name in providers:
+        provider_df = df[df['provider'] == provider_name].copy()
+        
+        if provider_df.empty:
+            continue
+        
+        # Group by R and compute mean/std accuracy
+        grouped = provider_df.groupby('R')['accuracy'].agg(['mean', 'std', 'count']).reset_index()
+        
+        if grouped.empty:
+            continue
+        
+        # Plot line with error band
+        ax.plot(grouped['R'], grouped['mean'], marker='o', label=provider_name.upper(), 
+               color=colors[provider_name], linewidth=2, markersize=8)
+        ax.fill_between(grouped['R'], 
+                        grouped['mean'] - grouped['std'],
+                        grouped['mean'] + grouped['std'],
+                        alpha=0.2, color=colors[provider_name])
+    
+    ax.set_xlabel("Signal Strength (R)", fontsize=12)
+    ax.set_ylabel("Accuracy", fontsize=12)
+    ax.set_title("RQ3: Commercial LLM Accuracy vs Signal Strength", fontsize=14, fontweight='bold')
+    ax.set_ylim([0, 1.05])
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3)
+    
+    os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
+    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Saved accuracy vs R plot to {output_file}")
+
+
+def plot_rq3_regression_baselines(
+    results_root: str,
+    output_file: str = "rq3_regression_baselines.png"
+) -> None:
+    """
+    Plot MSE comparison between TinyLlama model and gradient descent baselines.
+    """
+    run_dirs = _scan_rq3_regression_dirs(results_root)
+    if not run_dirs:
+        print("⚠️  No RQ3 regression results found")
+        return
+    
+    rows = []
+    for d in run_dirs:
+        summary_file = os.path.join(d, "summary.json")
+        if os.path.isfile(summary_file):
+            with open(summary_file) as f:
+                summary = json.load(f)
+                rows.append(summary)
+    
+    if not rows:
+        print("⚠️  No summaries found")
+        return
+    
+    df = pd.DataFrame(rows)
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # Group by N (context length) and compute mean MSE
+    grouped = df.groupby('N')[['mse_model_mean', 'mse_gd1_mean', 'mse_gdpp_mean']].mean().reset_index()
+    
+    x = np.arange(len(grouped['N']))
+    width = 0.25
+    
+    ax.bar(x - width, grouped['mse_model_mean'], width, label='TinyLlama', color='#FFA500', alpha=0.8)
+    ax.bar(x, grouped['mse_gd1_mean'], width, label='GD-1 (One-step)', color='#4285F4', alpha=0.8)
+    ax.bar(x + width, grouped['mse_gdpp_mean'], width, label='GD++ (Preconditioned)', color='#34A853', alpha=0.8)
+    
+    ax.set_xlabel("Context Length (N)", fontsize=12)
+    ax.set_ylabel("Mean Squared Error (MSE)", fontsize=12)
+    ax.set_title("RQ3: Linear Regression - Model vs Gradient Descent Baselines", fontsize=14, fontweight='bold')
+    ax.set_xticks(x)
+    ax.set_xticklabels(grouped['N'])
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3, axis='y')
+    
+    os.makedirs(os.path.dirname(output_file) or ".", exist_ok=True)
+    plt.savefig(output_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    print(f"✅ Saved regression baselines plot to {output_file}")
+
+
+def generate_all_rq3_plots(results_root: str, plots_root: str = None) -> None:
+    """Generate all RQ3 visualization plots"""
+    if plots_root is None:
+        plots_root = os.path.join(results_root, "rq3", "_plots")
+    
+    os.makedirs(plots_root, exist_ok=True)
+    
+    print(f"\n📊 Generating RQ3 plots to {plots_root}...")
+    
+    # Commercial LLM plots
+    plot_rq3_provider_comparison_heatmap(
+        results_root,
+        os.path.join(plots_root, "provider_comparison_heatmap.png")
+    )
+    
+    plot_rq3_accuracy_vs_r(
+        results_root,
+        os.path.join(plots_root, "accuracy_vs_r.png")
+    )
+    
+    # Regression plots
+    plot_rq3_regression_baselines(
+        results_root,
+        os.path.join(plots_root, "regression_baselines.png")
+    )
+    
+    print(f"✅ All RQ3 plots generated in {plots_root}")
+

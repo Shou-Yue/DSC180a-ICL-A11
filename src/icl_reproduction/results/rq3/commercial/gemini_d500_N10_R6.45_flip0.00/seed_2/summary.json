@@ -1,0 +1,14 @@
+{
+  "mode": "commercial",
+  "d": 500,
+  "N": 10,
+  "R": 6.45,
+  "provider": "gemini",
+  "seed": 2,
+  "flip_prob": 0.0,
+  "num_tasks": 10,
+  "correct": 0,
+  "total": 0,
+  "accuracy": 0.0,
+  "timestamp": "2026-03-07T06:57:48.824126"
+}

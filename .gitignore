@@ -1,0 +1,3 @@
+*.env
+.github/prompts/plan-rq3TestingAnalysisFramework.prompt.md
+results/commercial*

@@ -1,0 +1,10 @@
+{
+  "mode": "commercial",
+  "d": 50,
+  "N": 5,
+  "R": 6.45,
+  "provider": "gemini",
+  "seed": 1,
+  "flip_prob": 0.0,
+  "num_tasks": 10
+}

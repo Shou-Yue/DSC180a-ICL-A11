@@ -1,0 +1,14 @@
+{
+  "mode": "commercial",
+  "d": 1000,
+  "N": 20,
+  "R": 0.3,
+  "provider": "claude",
+  "seed": 2,
+  "flip_prob": 0.0,
+  "num_tasks": 10,
+  "correct": 0,
+  "total": 0,
+  "accuracy": 0.0,
+  "timestamp": "2026-03-07T07:02:32.934915"
+}

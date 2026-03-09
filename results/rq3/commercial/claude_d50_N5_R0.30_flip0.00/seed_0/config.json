@@ -1,0 +1,10 @@
+{
+  "mode": "commercial",
+  "d": 50,
+  "N": 5,
+  "R": 0.3,
+  "provider": "claude",
+  "seed": 0,
+  "flip_prob": 0.0,
+  "num_tasks": 10
+}

@@ -1,0 +1,14 @@
+{
+  "mode": "commercial",
+  "d": 1000,
+  "N": 20,
+  "R": 6.45,
+  "provider": "gpt",
+  "seed": 1,
+  "flip_prob": 0.0,
+  "num_tasks": 10,
+  "correct": 2,
+  "total": 2,
+  "accuracy": 1.0,
+  "timestamp": "2026-03-06T19:15:36.511574"
+}

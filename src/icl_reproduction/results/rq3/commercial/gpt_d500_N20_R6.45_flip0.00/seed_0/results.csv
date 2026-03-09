@@ -1,0 +1,11 @@
+task_idx,prediction,true_label,correct,error
+0,1,1,1,
+1,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 200000, Requested 22660. Please try again in 6.798s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+2,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 198288, Requested 22634. Please try again in 6.276s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+3,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 178420, Requested 22648. Please try again in 320ms. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+4,1,0,0,
+5,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 200000, Requested 22644. Please try again in 6.793s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+6,1,1,1,
+7,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 200000, Requested 22679. Please try again in 6.803s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+8,-1,-1,0,"Error code: 429 - {'error': {'message': 'Rate limit reached for gpt-4o-mini in organization org-i5FO2UbBeJsQjvgXjwR5RW5H on tokens per min (TPM): Limit 200000, Used 186828, Requested 22662. Please try again in 2.847s. Visit https://platform.openai.com/account/rate-limits to learn more.', 'type': 'tokens', 'param': None, 'code': 'rate_limit_exceeded'}}"
+9,1,0,0,
