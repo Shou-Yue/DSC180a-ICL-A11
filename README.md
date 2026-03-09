@@ -104,9 +104,19 @@ The repository is structured as follows:
 │ │ │ └── notebooks/             # Experiment notebooks (e.g. test_d_values, test_B_values)
 │ │ │ └── run_rq2.py             # CLI entrypoint for RQ2 sweeps and optional noise runs
 │ │ │
-│ │ ├── rq3/                     # RQ3: LLM provider interface and app
-│ │ │ ├── llm_providers.py
-│ │ │ ├── app.py
+│ │ ├── rq3/                     # RQ3: full transformer architectures vs linear attention
+│ │ │ ├── run_rq3.py             # CLI entrypoint for RQ3 sweeps
+│ │ │ ├── llm_providers.py       # LLM provider interface
+│ │ │ ├── dataset.py             # Dataset utilities for RQ3
+│ │ │ ├── app.py                 # App interface
+│ │ │ ├── analyze_results.py     # Result analysis and plotting
+│ │ │ ├── tinyllama_probing.py   # TinyLlama probing experiments
+│ │ │ ├── tests/                 # Tests for RQ3
+│ │ │ │ ├── test_api_connections.py
+│ │ │ │ ├── test_dataset.py
+│ │ │ │ ├── test_dual_metrics.py
+│ │ │ │ ├── test_tinyllama_probe.py
+│ │ │ │ └── find_claude_model.py
 │ │ │ └── results/               # RQ3 outputs (e.g. accuracy_results.jsonl)
 │ │ │
 │ │ ├── data.py                  # Synthetic Gaussian mixture dataset generator
