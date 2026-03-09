@@ -102,6 +102,7 @@ The repository is structured as follows:
 │ │ ├── rq2/                     # RQ2: reference paper classification with LLM backends
 │ │ │ ├── icl_classification/    # Model/dataset code (classification_icl, gpt, llama, gemma, mistral, datasets)
 │ │ │ └── notebooks/             # Experiment notebooks (e.g. test_d_values, test_B_values)
+│ │ │ └── run_rq2.py             # CLI entrypoint for RQ2 sweeps and optional noise runs
 │ │ │
 │ │ ├── rq3/                     # RQ3: LLM provider interface and app
 │ │ │ ├── llm_providers.py
